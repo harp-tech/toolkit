@@ -15,6 +15,7 @@ internal class Program
         rootCommand.Options.Add(portTimeoutOption);
         rootCommand.Subcommands.Add(new ListCommand());
         rootCommand.Subcommands.Add(new UpdateFirmwareCommand());
+        rootCommand.Subcommands.Add(new BenchmarkCommand());
         rootCommand.SetAction(async parseResult =>
         {
             var portName = parseResult.GetRequiredValue(portNameOption);
