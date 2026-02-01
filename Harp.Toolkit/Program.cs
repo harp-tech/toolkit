@@ -8,61 +8,14 @@ internal class Program
 {
     static async Task Main(string[] args)
     {
-        Option<string> portNameOption = new("--port")
-        {
-            Description = "Specifies the name of the serial port used to communicate with the device.",
-            Required = true
-        };
-
-        Option<int?> portTimeoutOption = new("--timeout")
-        {
-            Description = "Specifies an optional timeout, in milliseconds, to receive a response from the device."
-        };
-
-        Option<FileInfo> firmwarePathOption = new("--path")
-        {
-            Description = "Specifies the path of the firmware file to write to the device.",
-            Required = true
-        };
-
-        Option<bool> forceUpdateOption = new("--force")
-        {
-            Description = "Indicates whether to force a firmware update on the device regardless of compatibility."
-        };
-
-        var listCommand = new Command("list", description: "Lists all available system serial ports.");
-        listCommand.SetAction(parseResult =>
-        {
-            var portNames = SerialPort.GetPortNames();
-            Console.WriteLine($"PortNames: [{string.Join(", ", portNames)}]");
-        });
-
-        var updateCommand = new Command("update", description: "Update the device firmware from a local HEX file.");
-        updateCommand.Options.Add(portNameOption);
-        updateCommand.Options.Add(firmwarePathOption);
-        updateCommand.Options.Add(forceUpdateOption);
-        updateCommand.SetAction(async parseResult =>
-        {
-            var firmwarePath = parseResult.GetRequiredValue(firmwarePathOption);
-            var portName = parseResult.GetRequiredValue(portNameOption);
-            var forceUpdate = parseResult.GetValue(forceUpdateOption);
-
-            var firmware = DeviceFirmware.FromFile(firmwarePath.FullName);
-            Console.WriteLine($"{firmware.Metadata}");
-            ProgressBar.Write(0);
-            try
-            {
-                var progress = new Progress<int>(ProgressBar.Update);
-                await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate, progress);
-            }
-            finally { Console.WriteLine(); }
-        });
-
-        var rootCommand = new RootCommand("Tool for inspecting, updating and interfacing with Harp devices.");
+        RootCommand rootCommand = new("Tool for inspecting, updating and interfacing with Harp devices.");
+        PortNameOption portNameOption = new();
+        PortTimeoutOption portTimeoutOption = new();
         rootCommand.Options.Add(portNameOption);
         rootCommand.Options.Add(portTimeoutOption);
-        rootCommand.Subcommands.Add(listCommand);
-        rootCommand.Subcommands.Add(updateCommand);
+        rootCommand.Subcommands.Add(new ListCommand());
+        rootCommand.Subcommands.Add(new UpdateFirmwareCommand());
+        rootCommand.Subcommands.Add(new BenchmarkCommand());
         rootCommand.SetAction(async parseResult =>
         {
             var portName = parseResult.GetRequiredValue(portNameOption);

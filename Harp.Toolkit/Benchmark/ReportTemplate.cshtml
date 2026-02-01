@@ -1,0 +1,116 @@
+@using Harp.Toolkit
+@model Harp.Toolkit.Report
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Report - @Model.DeviceName</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); margin-bottom: 2rem; }
+        .card-header { background-color: #fff; border-bottom: 1px solid rgba(0,0,0,.125); padding: 1.25rem; }
+        .status-passed { color: #198754; font-weight: bold; }
+        .status-failed { color: #dc3545; font-weight: bold; }
+        .status-error { color: #fd7e14; font-weight: bold; }
+        .status-skipped { color: #6c757d; font-weight: bold; }
+        .benchmark-stats { font-size: 0.85rem; color: #495057; }
+        .table th { font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="display-5 mb-0">@Model.DeviceName</h1>
+                <p class="text-muted mb-0">Test Execution Report &bull; @Model.RunDate.ToString("MMMM dd, yyyy HH:mm:ss")</p>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-primary">Harp Toolkit Test</span>
+            </div>
+        </div>
+
+        @foreach (var suite in Model.Suites)
+        {
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h4 mb-1">@suite.Name</h2>
+                    <p class="text-muted mb-0 small">@suite.Description</p>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 25%">Test Case</th>
+                                    <th style="width: 10%">Status</th>
+                                    <th style="width: 35%">Result Details</th>
+                                    <th style="width: 30%">Message</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var test in suite.Results)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">@test.Name</div>
+                                            <div class="text-muted small">@test.Description</div>
+                                        </td>
+                                        <td>
+                                            <span class="status-@(test.Result?.Status.ToString().ToLower() ?? "skipped")">
+                                                @(test.Result?.Status.ToString().ToUpper() ?? "SKIPPED")
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @if (test.Result is NumericBenchmarkResult bsr)
+                                            {
+                                                <div class="benchmark-stats">
+                                                    <div class="row">
+                                                        <div class="col-sm-4"><strong>Mean:</strong> @bsr.Summary.Mean.ToString("F4")</div>
+                                                        <div class="col-sm-4"><strong>Median:</strong> @bsr.Summary.Median.ToString("F4")</div>
+                                                        <div class="col-sm-4"><strong>StdDev:</strong> @bsr.Summary.StdDev.ToString("F4")</div>
+                                                    </div>
+                                                    <div class="row mt-1">
+                                                        <div class="col-sm-4"><strong>Min:</strong> @bsr.Summary.Min.ToString("F4")</div>
+                                                        <div class="col-sm-4"><strong>Max:</strong> @bsr.Summary.Max.ToString("F4")</div>
+                                                    </div>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                var valProp = test.Result?.GetType().GetProperty("Value");
+                                                object? val = null;
+                                                if (valProp != null)
+                                                {
+                                                    val = valProp.GetValue(test.Result);
+                                                }
+
+                                                if (val != null)
+                                                {
+                                                    <code class="text-dark">@val</code>
+                                                }
+                                            }
+
+                                            @if (test.Result is ErrorResult er && er.Exception != null)
+                                            {
+                                                <div class="mt-2">
+                                                    <pre class="bg-light p-2 small mb-0"><code>@er.Exception.ToString()</code></pre>
+                                                </div>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="small text-muted">@test.Result?.Message</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</body>
+</html>
