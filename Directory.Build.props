@@ -11,6 +11,7 @@
     <PackageProjectUrl>https://github.com/harp-tech/toolkit</PackageProjectUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <UseArtifactsOutput>true</UseArtifactsOutput>
+    <VersionPrefix>0.2.0</VersionPrefix>
     <VersionSuffix></VersionSuffix>
   </PropertyGroup>
 
