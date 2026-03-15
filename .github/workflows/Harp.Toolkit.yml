@@ -127,6 +127,11 @@ jobs:
       - name: Set up .NET tools
         run: dotnet tool restore
 
+      # ----------------------------------------------------------------------- Configure build
+      - name: Configure build
+        id: configure-build
+        uses: bonsai-rx/configure-build@v1
+
       # ----------------------------------------------------------------------- Restore
       - name: Restore
         run: dotnet restore
