@@ -6,7 +6,10 @@
         {
           "src": "../src/",
           "files": "**/*.csproj",
-          "exclude": "**/*.Tests.csproj"
+          "exclude": [
+            "**/*.Tests.csproj",
+            "**/*Template.csproj"
+          ]
         }
       ],
       "output": "../artifacts/docs/api/",
