@@ -3,7 +3,7 @@
   <PropertyGroup>
     <PackageType>Template</PackageType>
     <Description>Templates for creating a new Harp device</Description>
-    <PackageTags>Harp Toolkit Device Templates</PackageTags>
+    <PackageTags>$(PackageTags) Device Templates</PackageTags>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <TargetFramework>netstandard2.0</TargetFramework>
     <IncludeContentInPack>true</IncludeContentInPack>

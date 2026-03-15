@@ -3,17 +3,17 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>harp.toolkit</ToolCommandName>
     <Description>A tool for inspecting, updating and interfacing with Harp devices from the command-line.</Description>
-    <PackageTags>Harp Toolkit Device Firmware</PackageTags>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Bonsai.Harp" Version="3.6.1" />
+    <PackageReference Include="ExcelDataReader.DataSet" Version="3.8.0" />
+    <PackageReference Include="Harp.Generators" Version="0.5.1" />
     <PackageReference Include="System.CommandLine" Version="2.0.1" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.2" />
   </ItemGroup>
 
 </Project>

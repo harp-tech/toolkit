@@ -3,17 +3,24 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harp.Toolkit", "Harp.Toolkit\Harp.Toolkit.csproj", "{BFC25910-BC44-4792-9CDE-5B3A17D0B157}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harp.Toolkit", "src\Harp.Toolkit\Harp.Toolkit.csproj", "{BFC25910-BC44-4792-9CDE-5B3A17D0B157}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harp.Templates", "Harp.Templates\Harp.Templates.csproj", "{EC58E518-3522-4B04-9A05-DE7F14A51FFA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harp.Templates", "src\Harp.Templates\Harp.Templates.csproj", "{EC58E518-3522-4B04-9A05-DE7F14A51FFA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{DEE5DD87-39C1-BF34-B639-A387DCCF972B}"
+	ProjectSection(SolutionItems) = preProject
+		build\Common.csproj.props = build\Common.csproj.props
+		build\Common.csproj.targets = build\Common.csproj.targets
+		build\Common.Tests.csproj.props = build\Common.Tests.csproj.props
+		build\icon.png = build\icon.png
+		build\Package.props = build\Package.props
+		build\Project.csproj.props = build\Project.csproj.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{BFC25910-BC44-4792-9CDE-5B3A17D0B157}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -24,5 +31,8 @@ Global
 		{EC58E518-3522-4B04-9A05-DE7F14A51FFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC58E518-3522-4B04-9A05-DE7F14A51FFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EC58E518-3522-4B04-9A05-DE7F14A51FFA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 EndGlobal

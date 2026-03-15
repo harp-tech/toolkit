@@ -1,6 +1,6 @@
 ﻿using System.CommandLine;
-using System.IO.Ports;
 using Bonsai.Harp;
+using Harp.Toolkit.Generate;
 
 namespace Harp.Toolkit;
 
@@ -15,6 +15,7 @@ internal class Program
         rootCommand.Options.Add(portTimeoutOption);
         rootCommand.Subcommands.Add(new ListCommand());
         rootCommand.Subcommands.Add(new UpdateFirmwareCommand());
+        rootCommand.Subcommands.Add(new GenerateCommand());
         rootCommand.SetAction(async parseResult =>
         {
             var portName = parseResult.GetRequiredValue(portNameOption);

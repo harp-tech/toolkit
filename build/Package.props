@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <PackageTags>Harp Toolkit</PackageTags>
+    <PackageProjectUrl>https://harp-tech.org/toolkit</PackageProjectUrl>
+
+    <Authors>harp-tech</Authors>
+    <Copyright>Copyright © harp-tech and Contributors</Copyright>
+  </PropertyGroup>
+</Project>

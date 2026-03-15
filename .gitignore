@@ -1,6 +1,2 @@
 .vs/
-.vscode/
 /artifacts/
-*.user
-*.suo
-*.hex

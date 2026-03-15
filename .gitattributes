@@ -3,11 +3,13 @@
 
 # Scripts
 *.cmd text eol=crlf
+*.sh text eol=lf
 *.ps1 text
 
 # Config
 *.gitignore text
 *.gitattributes text
+*.gitmodules text eol=lf
 *.editorconfig text
 *.git-blame-ignore-revs text
 *.sln text
