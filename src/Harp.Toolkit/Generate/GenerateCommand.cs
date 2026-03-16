@@ -9,6 +9,7 @@ public class GenerateCommand : Command
     {
         Subcommands.Add(new GenerateInterfaceCommand());
         Subcommands.Add(new GenerateFirmwareCommand());
+        Subcommands.Add(new GenerateRegisterMetadataCommand());
     }
 
     internal static void WriteFileContents(string path, IEnumerable<KeyValuePair<string, string>> generatedFileContents)
