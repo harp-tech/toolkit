@@ -41,3 +41,11 @@ Tool for inspecting, updating and interfacing with Harp devices.
     ```cmd
     dotnet tool restore
     ```
+
+## Contributing
+
+Bug reports and contributions are welcome at [the GitHub repository](https://github.com/harp-tech/toolkit).
+
+## License
+
+`Harp.Toolkit` is released as open-source under the [MIT license](https://licenses.nuget.org/MIT).
