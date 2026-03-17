@@ -5,10 +5,11 @@ namespace Harp.Toolkit.Generate;
 public class MetadataPathArgument : Argument<FileInfo>
 {
     public MetadataPathArgument()
-        : base("device.yml")
+        : base("metadataPath")
     {
         ArgumentValidation.AcceptExistingOnly(this);
         Description = "The path to the file describing the device registers.";
-        Arity = ArgumentArity.ExactlyOne;
+        DefaultValueFactory = result => result.AcceptExistingOnly(new FileInfo("device.yml"));
+        Arity = ArgumentArity.ZeroOrOne;
     }
 }
