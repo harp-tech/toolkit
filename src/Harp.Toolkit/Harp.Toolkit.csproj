@@ -6,6 +6,7 @@
     <Description>A tool for inspecting, updating and interfacing with Harp devices from the command-line.</Description>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
+    <PreserveCompilationContext>true</PreserveCompilationContext> <!-- Necessary for RazorLight templates -->
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +15,14 @@
     <PackageReference Include="Harp.Generators" Version="0.6.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.1" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.2" />
+    <PackageReference Include="RazorLight" Version="2.3.1" />
+    <PackageReference Include="Spectre.Console" Version="0.54.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Benchmark\ReportTemplate.cshtml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
