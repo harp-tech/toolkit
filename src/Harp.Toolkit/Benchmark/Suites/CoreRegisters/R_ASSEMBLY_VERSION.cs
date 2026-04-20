@@ -11,10 +11,9 @@ internal class R_ASSEMBLY_VERSION : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            int value = await device.ReadAssemblyVersionAsync();
-            bool isZero = value == 0x00;
+            var value = await device.ReadAssemblyVersionAsync();
             return new AssertionResult(
-                isZero,
+                value == 0x00,
                 x => x ?
                     $"AssemblyVersion register correctly returned 0x00." :
                     $"AssemblyVersion register returned a non-zero value (0x{value:X2})");
