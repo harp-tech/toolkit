@@ -4,18 +4,20 @@ namespace Harp.Toolkit.Benchmark.Suites;
 
 internal class R_ASSEMBLY_VERSION : Suite
 {
-    public override string Description => "WhoAmI Register Tests";
+    public override string Description => "AssemblyVersion Register Tests";
 
-    [HarpTest(Description = "Validates that the WhoAmI register exists and contains a value.")]
-    public async Task<IResult> CheckWhoAmI(string portName)
+    [HarpTest(Description = "Validates the deprecated register AssemblyVersion returns 0x00.")]
+    public async Task<IResult> IsReturnZero(string portName)
     {
         using (var device = new AsyncDevice(portName))
         {
-            int value = await device.ReadWhoAmIAsync();
-            return new Result<int>(
-                value,
-                (v) => v > 0 && v < 9999,
-                (v, success) => success ? $"WhoAmI register contains valid value: {v}." : $"WhoAmI register contains invalid value: {v}.");
+            int value = await device.ReadAssemblyVersionAsync();
+            bool isZero = value == 0x00;
+            return new AssertionResult(
+                isZero,
+                isZero => isZero ?
+                    $"AssemblyVersion register correctly returned 0x00." :
+                    $"AssemblyVersion register returned a non-zero value (0x{value:X2})");
         }
     }
 }
