@@ -1,8 +1,8 @@
 ﻿
 using Bonsai.Harp;
-namespace Harp.Toolkit;
+namespace Harp.Toolkit.Benchmark.Suites;
 
-public class RoundTripTestSuite : Suite
+internal class RoundTripTestSuite : Suite
 {
     private double maxRoundTripDelayMs;
     public RoundTripTestSuite(double maxRoundTripDelayMs = 4.0)
@@ -17,7 +17,7 @@ public class RoundTripTestSuite : Suite
     {
         const int n = 1000;
         double[] timestamps = new double[n];
-        HarpMessage probe = WhoAmI.FromPayload(MessageType.Read, default);
+        HarpMessage probe = Bonsai.Harp.WhoAmI.FromPayload(MessageType.Read, default);
         using (var device = new AsyncDevice(portName))
         {
             for (int i = 0; i < n; i++)

@@ -1,8 +1,8 @@
 ﻿
 using Bonsai.Harp;
-namespace Harp.Toolkit;
+namespace Harp.Toolkit.Benchmark.Suites;
 
-public class TimestampSecondsSuite : Suite
+internal class R_TIMESTAMP_SECOND : Suite
 {
     public override string Description => "Timestamp Seconds Register Tests";
 

@@ -1,8 +1,8 @@
 ﻿
 using Bonsai.Harp;
-namespace Harp.Toolkit;
+namespace Harp.Toolkit.Benchmark.Suites;
 
-public class WhoAmISuite : Suite
+internal class R_ASSEMBLY_VERSION : Suite
 {
     public override string Description => "WhoAmI Register Tests";
 
