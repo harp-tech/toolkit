@@ -1,4 +1,4 @@
-using Bonsai.Harp;
+﻿using Bonsai.Harp;
 
 namespace Harp.Toolkit.Benchmark.Suites;
 
