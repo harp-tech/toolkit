@@ -1,6 +1,5 @@
 ﻿
 using Bonsai.Harp;
-using System.Threading;
 namespace Harp.Toolkit.Benchmark.Suites;
 
 internal class R_TIMESTAMP_OFFSET : Suite
@@ -28,13 +27,12 @@ internal class R_TIMESTAMP_OFFSET : Suite
         using (var device = new AsyncDevice(portName))
         {
             var req = HarpMessage.FromByte(address, MessageType.Write, 0x00);
-            var value = await device.CommandAsync(req);
-
+            var rejected = await RegisterHelpers.IsWriteRejectedAsync(device, req);
             return new AssertionResult(
-                value.Error,
+                rejected,
                 x => x ?
-                    $"Device correctly reported an error when trying to write to TimestampOffset register" :
-                    $"Timestamp Offset register is deprecated and MUST NOT allow writes.");
+                    "Device correctly reported an error when trying to write to TimestampOffset register." :
+                    "Timestamp Offset register is deprecated and MUST NOT allow writes.");
         }
     }
 }

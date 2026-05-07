@@ -19,11 +19,14 @@ public abstract class Suite
             .Where(x => x.Attribute != null);
     }
 
-    public async IAsyncEnumerable<MethodResult> RunAllAsync(string portName, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<MethodResult> RunAllAsync(string portName, [EnumeratorCancellation] CancellationToken cancellationToken = default, Action<string, string>? onTestStart = null)
     {
         foreach (var (method, attr) in CollectTests())
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            // Notify that test is starting
+            onTestStart?.Invoke(method.Name, attr.Description ?? string.Empty);
 
             IResult testResult;
             try

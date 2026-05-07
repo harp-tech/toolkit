@@ -17,11 +17,11 @@ public class Runner
         return suites.AsReadOnly();
     }
 
-    public async IAsyncEnumerable<(Suite Suite, MethodResult Result)> RunAllAsync(string portName, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<(Suite Suite, MethodResult Result)> RunAllAsync(string portName, [EnumeratorCancellation] CancellationToken cancellationToken = default, Action<Suite, string, string>? onTestStart = null)
     {
         foreach (var suite in suites)
         {
-            await foreach (var result in suite.RunAllAsync(portName, cancellationToken))
+            await foreach (var result in suite.RunAllAsync(portName, cancellationToken, (testName, testDesc) => onTestStart?.Invoke(suite, testName, testDesc)))
             {
                 yield return (suite, result);
             }

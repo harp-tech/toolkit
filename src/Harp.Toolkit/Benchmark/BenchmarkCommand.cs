@@ -1,5 +1,6 @@
 ﻿using System.CommandLine;
 using Spectre.Console;
+using Harp.Toolkit.Benchmark.Suites;
 
 namespace Harp.Toolkit;
 public class BenchmarkCommand : Command
@@ -42,29 +43,30 @@ public class BenchmarkCommand : Command
             RunDate = DateTime.Now
         };
 
-        await AnsiConsole.Progress()
-            .StartAsync(async ctx =>
+        int currentTest = 0;
+        await foreach (var (suite, result) in runner.RunAllAsync(portName, cancellationToken, (suite, testName, testDesc) =>
+        {
+            // Print "Running" status before test execution (without newline)
+            currentTest++;
+            Console.Write($"({currentTest}/{runner.TestCount}) {suite.GetType().Name}::{testName} .... Running...");
+        }))
+        {
+            // Clear the line by moving cursor to start and overwriting with spaces, then print result
+            Console.Write($"\r{new string(' ', Console.WindowWidth - 1)}\r");
+            AnsiConsole.MarkupLine($"[grey]({currentTest}/{runner.TestCount}) {suite.GetType().Name}::{result.Name}[/] .... {GetResultMarkup(result.Result)}");
+
+            var suiteResult = report.Suites.FirstOrDefault(s => s.Name == suite.GetType().Name);
+            if (suiteResult == null)
             {
-                var task = ctx.AddTask("[green]Running tests...[/]", true, runner.TestCount);
-
-                await foreach (var (suite, result) in runner.RunAllAsync(portName, cancellationToken))
+                suiteResult = new SuiteResult
                 {
-                    task.Increment(1);
-                    AnsiConsole.MarkupLine($"[grey]{suite.GetType().Name}::{result.Name}[/] .... {GetResultMarkup(result.Result)}");
-
-                    var suiteResult = report.Suites.FirstOrDefault(s => s.Name == suite.GetType().Name);
-                    if (suiteResult == null)
-                    {
-                        suiteResult = new SuiteResult
-                        {
-                            Name = suite.GetType().Name,
-                            Description = suite.Description
-                        };
-                        report.Suites.Add(suiteResult);
-                    }
-                    suiteResult.Results.Add(result);
-                }
-            });
+                    Name = suite.GetType().Name,
+                    Description = suite.Description
+                };
+                report.Suites.Add(suiteResult);
+            }
+            suiteResult.Results.Add(result);
+        }
 
         if (verbose)
         {
@@ -142,9 +144,27 @@ public class BenchmarkCommand : Command
     {
         public CoreRunner() : base()
         {
-            AddSuite(new WhoAmISuite());
+            AddSuite(new R_WHO_AM_I());
+            AddSuite(new R_HW_VERSION_H());
+            AddSuite(new R_HW_VERSION_L());
+            AddSuite(new R_ASSEMBLY_VERSION());
+            AddSuite(new R_CORE_VERSION_H());
+            AddSuite(new R_CORE_VERSION_L());
+            AddSuite(new R_FW_VERSION_H());
+            AddSuite(new R_FW_VERSION_L());
+            AddSuite(new R_TIMESTAMP_SECOND());
+            AddSuite(new R_TIMESTAMP_MICRO());
+            AddSuite(new R_OPERATION_CTRL());
+            AddSuite(new R_RESET_DEV());
+            AddSuite(new R_DEVICE_NAME());
+            AddSuite(new R_SERIAL_NUMBER());
+            AddSuite(new R_CLOCK_CONFIG());
+            AddSuite(new R_TIMESTAMP_OFFSET());
+            AddSuite(new R_UID());
+            AddSuite(new R_TAG());
+            AddSuite(new R_HEARTBEAT());
+            AddSuite(new R_VERSION());
             AddSuite(new RoundTripTestSuite());
-            AddSuite(new TimestampSecondsSuite());
         }
     }
 }
