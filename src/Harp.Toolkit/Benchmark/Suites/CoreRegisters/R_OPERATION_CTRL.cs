@@ -77,29 +77,25 @@ internal class R_OPERATION_CTRL : Suite
     public async Task<IResult> HeartbeatEnEmitsEvents(string portName)
     {
         byte originalOpCtrl = 0;
-        IDisposable? subscription = null;
 
         try
         {
-            // Read original state before modifying
             using (var device = new AsyncDevice(portName))
             {
                 originalOpCtrl = await device.ReadByteAsync(address);
             }
+            await Task.Delay(500); // The previous one needs some time to disconnect
 
-            var harpDevice = new Bonsai.Harp.Device { PortName = portName, Heartbeat = EnableFlag.Enabled };
-            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-            cts.Token.Register(() => tcs.TrySetResult(false));
+            var harpDevice = new Bonsai.Harp.Device { PortName = portName };
+            var responses = await RegisterHelpers.WriteToTransportAsync(
+                portName,
+                new[] { HarpMessage.FromByte(address, MessageType.Write, 0xE5) },
+                TimeSpan.FromSeconds(0.5));
+            var messages = await harpDevice.Generate()
+                .TakeUntil(Observable.Timer(TimeSpan.FromSeconds(2)))
+                .ToList();
 
-            subscription = harpDevice.Generate()
-                .Where(m => m.Address == 0x12 && m.MessageType == MessageType.Event)
-                .Take(1)
-                .Subscribe(
-                    _ => tcs.TrySetResult(true),
-                    ex => tcs.TrySetException(ex));
-
-            bool received = await tcs.Task;
+            bool received = messages.Any(m => m.Address == 0x18 && m.MessageType == MessageType.Event);
 
             return new AssertionResult(
                 received,
@@ -113,15 +109,11 @@ internal class R_OPERATION_CTRL : Suite
         }
         finally
         {
-            subscription?.Dispose();
-            await Task.Delay(200); // Fudge delay to ensure port is released
-
-            // Always restore original Operation Control state
+            await Task.Delay(200); // Wait for port to be released before reopening
             using (var device = new AsyncDevice(portName))
             {
                 await device.CommandAsync(HarpMessage.FromByte(address, MessageType.Write, originalOpCtrl));
             }
-
         }
     }
 
@@ -191,6 +183,44 @@ internal class R_OPERATION_CTRL : Suite
             using (var device = new AsyncDevice(portName))
             {
                 await device.CommandAsync(HarpMessage.FromByte(address, MessageType.Write, originalOpCtrl));
+            }
+        }
+    }
+
+    private static async Task<IResult> TestOptionalBitAsync(AsyncDevice device, string bitName, byte bitMask)
+    {
+        var original = await device.ReadByteAsync(address);
+        byte toggled = (byte)(original ^ bitMask);
+
+        try
+        {
+            try
+            {
+                await device.CommandAsync(HarpMessage.FromByte(address, MessageType.Write, toggled));
+            }
+            catch (HarpException)
+            {
+                return new Result<bool>(false, Status.Skipped,
+                    $"{bitName} is optional/deprecated and not supported by this device.");
+            }
+
+            var readBack = await device.ReadByteAsync(address);
+            bool bitChanged = (readBack & bitMask) == (toggled & bitMask);
+
+            return new AssertionResult(
+                bitChanged,
+                x => x
+                    ? $"{bitName}: bit correctly toggled."
+                    : $"{bitName}: bit did not change after write (expected {(toggled & bitMask) != 0}, got {(readBack & bitMask) != 0}).");
+        }
+        finally
+        {
+            try
+            {
+                await device.CommandAsync(HarpMessage.FromByte(address, MessageType.Write, original));
+            }
+            catch
+            {
             }
         }
     }
