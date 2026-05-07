@@ -1,3 +1,4 @@
+﻿using System.Text;
 using Bonsai.Harp;
 
 namespace Harp.Toolkit.Benchmark.Suites;
@@ -12,7 +13,7 @@ internal class R_CLOCK_CONFIG : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            return await RegisterHelpers.AssertReadableByteAsync(device, address, "ClockConfig");
+            return await RegisterHelpers.AssertReadableAsync(a => device.ReadByteAsync(a), address, "ClockConfig");
         }
     }
 
@@ -24,9 +25,15 @@ internal class R_CLOCK_CONFIG : Suite
             var value = await device.ReadByteAsync(address);
             bool repAble = (value & (1 << 3)) != 0;
             bool genAble = (value & (1 << 4)) != 0;
+            StringBuilder sb = new StringBuilder("ClockConfig sync capability:");
+            sb.Append("\n");
+            sb.Append(repAble ? "Device can repeat clock signal" : "Device cannot repeat clock signal");
+            sb.Append("\n");
+            sb.Append(genAble ? "Device can generate clock signal" : "Device cannot generate clock signal");
+            sb.Append("\n");
             return new AssertionResult(
                 true,
-                $"ClockConfig sync capability: REP_ABLE={repAble}, GEN_ABLE={genAble}.");
+                sb.ToString());
         }
     }
 }

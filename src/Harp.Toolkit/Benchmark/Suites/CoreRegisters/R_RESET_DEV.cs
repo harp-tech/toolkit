@@ -1,4 +1,4 @@
-using Bonsai.Harp;
+﻿using Bonsai.Harp;
 
 namespace Harp.Toolkit.Benchmark.Suites;
 
@@ -12,7 +12,7 @@ internal class R_RESET_DEV : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            return await RegisterHelpers.AssertReadableByteAsync(device, address, "ResetDev");
+            return await RegisterHelpers.AssertReadableAsync(a => device.ReadByteAsync(a), address, "ResetDev");
         }
     }
 }

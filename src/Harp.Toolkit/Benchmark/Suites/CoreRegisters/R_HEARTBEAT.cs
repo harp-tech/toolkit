@@ -1,10 +1,10 @@
-using Bonsai.Harp;
+﻿using Bonsai.Harp;
 
 namespace Harp.Toolkit.Benchmark.Suites;
 
 internal class R_HEARTBEAT : Suite
 {
-    private const byte address = 0x12;
+    private const byte address = 18;
     public override string Description => "Heartbeat Register Tests";
 
     [HarpTest(Description = "Validates that Heartbeat register is readable.")]
@@ -12,7 +12,7 @@ internal class R_HEARTBEAT : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            return await RegisterHelpers.AssertReadableByteAsync(device, address, "Heartbeat");
+            return await RegisterHelpers.AssertReadableAsync(a => device.ReadUInt16Async(a), address, "Heartbeat");
         }
     }
 

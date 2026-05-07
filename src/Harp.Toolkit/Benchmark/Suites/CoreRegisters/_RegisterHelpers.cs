@@ -73,11 +73,11 @@ internal static class RegisterHelpers
         }
     }
 
-    public static async Task<IResult> AssertReadableByteAsync(AsyncDevice device, int address, string registerName)
+    public static async Task<IResult> AssertReadableAsync<T>(Func<int, Task<T>> readFunc, int address, string registerName)
     {
         try
         {
-            await device.ReadByteAsync(address);
+            await readFunc(address);
             return new AssertionResult(true, $"{registerName} is readable.");
         }
         catch (Exception ex)
