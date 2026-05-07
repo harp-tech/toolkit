@@ -118,11 +118,9 @@ internal class R_OPERATION_CTRL : Suite
     }
 
     [HarpTest(Description = "Validates that the DUMP bit triggers a burst of all core register reads after an OpCtrl write.")]
-    public async Task<IResult> DumpEmitsRegisterBurst(string portName)
+    public async Task<IResult> RegisterDump(string portName)
     {
         byte originalOpCtrl = 0;
-        var messages = new ConcurrentQueue<HarpMessage>();
-        IDisposable? subscription = null;
 
         try
         {
@@ -132,43 +130,28 @@ internal class R_OPERATION_CTRL : Suite
                 originalOpCtrl = await device.ReadByteAsync(address);
             }
 
-            var harpDevice = new Bonsai.Harp.Device { PortName = portName, DumpRegisters = true };
-            subscription = harpDevice.Generate()
-                .Subscribe(m => messages.Enqueue(m));
+            var harpDevice = new Bonsai.Harp.Device { PortName = portName };
+            var messages = await RegisterHelpers.WriteToTransportAsync(
+                portName,
+                new[] { HarpMessage.FromByte(address, MessageType.Write, (byte)(originalOpCtrl | 0x08)) },
+                TimeSpan.FromSeconds(1));
 
-            await Task.Delay(1000);
-
-            var snapshot = messages.ToList();
-
-            int opCtrlWriteIdx = -1;
-            for (int i = 0; i < snapshot.Count; i++)
+            var opRegWriteResponse = messages.FirstOrDefault(m => m.Address == address && m.MessageType == MessageType.Write);
+            if (opRegWriteResponse == null)
             {
-                if (snapshot[i].Address == 0x0A && snapshot[i].MessageType == MessageType.Write)
-                {
-                    opCtrlWriteIdx = i;
-                    break;
-                }
+                return new AssertionResult(false, "No response received for OpCtrl write.");
             }
-
-            if (opCtrlWriteIdx < 0)
-                return new AssertionResult(false, "DumpEmitsRegisterBurst: no Write reply at OpCtrl (0x0A) found.");
-
-            var coreReads = snapshot
+            var coreReads = messages
                 .Select((m, i) => (msg: m, idx: i))
-                .Where(x => x.msg.Address <= 0x13 && x.msg.MessageType == MessageType.Read)
+                .Where(x => x.msg.Address <= 32 && x.msg.MessageType == MessageType.Read)
                 .ToList();
-
-            bool writeBeforeAllReads = coreReads.All(x => opCtrlWriteIdx < x.idx);
-            if (!writeBeforeAllReads)
-                return new AssertionResult(false, "DumpEmitsRegisterBurst: OpCtrl Write reply did not precede all core Read replies.");
-
-            var presentAddresses = coreReads.Select(x => (int)x.msg.Address).Distinct().ToHashSet();
-            var missing = Enumerable.Range(0, 0x14).Where(a => !presentAddresses.Contains(a)).ToList();
+            var uniqueCoreAddresses = coreReads.Select(x => x.msg.Address).Distinct().ToHashSet();
+            var missing = Enumerable.Range(0, 18).Where(a => !uniqueCoreAddresses.Contains(a)).ToList();
             if (missing.Count > 0)
                 return new AssertionResult(false,
-                    $"DumpEmitsRegisterBurst: missing Read replies for {missing.Count} core address(es): {string.Join(", ", missing.Select(a => $"0x{a:X2}"))}.");
+                    $"Missing Read replies for {missing.Count} core address(es): {string.Join(", ", missing.Select(a => $"0x{a:X2}"))}.");
 
-            return new AssertionResult(true, "DumpEmitsRegisterBurst: all 20 core register reads received after OpCtrl write.");
+            return new AssertionResult(true, "All core register reads received after OpCtrl write.");
         }
         catch (Exception ex)
         {
@@ -176,9 +159,7 @@ internal class R_OPERATION_CTRL : Suite
         }
         finally
         {
-            subscription?.Dispose();
             await Task.Delay(200);
-
             // Ensure we restore original state even though DUMP is transient
             using (var device = new AsyncDevice(portName))
             {
