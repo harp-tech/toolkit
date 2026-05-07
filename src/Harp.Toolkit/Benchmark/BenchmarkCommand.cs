@@ -107,10 +107,10 @@ public class BenchmarkCommand : Command
                     }
 
                     table.AddRow(
-                        new Markup($"[bold]{test.Name}[/]\n[dim]{test.Description}[/]"),
+                        new Markup($"[bold]{Markup.Escape(test.Name)}[/]\n[dim]{Markup.Escape(test.Description)}[/]"),
                         new Markup(GetResultMarkup(test.Result)),
-                        new Markup(details),
-                        new Markup(message)
+                        new Markup(Markup.Escape(details)),
+                        new Markup(Markup.Escape(message))
                     );
                 }
                 AnsiConsole.Write(table);
