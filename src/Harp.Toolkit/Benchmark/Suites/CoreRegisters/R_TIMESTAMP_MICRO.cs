@@ -1,4 +1,4 @@
-using Bonsai.Harp;
+﻿using Bonsai.Harp;
 
 namespace Harp.Toolkit.Benchmark.Suites;
 
@@ -14,7 +14,7 @@ internal class R_TIMESTAMP_MICRO : Suite
         {
             try
             {
-                await device.ReadByteArrayAsync(address);
+                await device.ReadUInt16Async(address);
                 return new AssertionResult(true, "TimestampMicro is readable.");
             }
             catch (Exception ex)
@@ -44,8 +44,7 @@ internal class R_TIMESTAMP_MICRO : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var rawBytes = await device.ReadByteArrayAsync(address);
-            var microValue = BitConverter.ToUInt16(rawBytes, 0);
+            var microValue = await device.ReadUInt16Async(address);
             return new AssertionResult(
                 microValue < 31250,
                 x => x
