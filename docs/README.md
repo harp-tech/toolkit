@@ -1,6 +1,6 @@
 # Harp Toolkit
 
-Tool for inspecting, updating and interfacing with Harp devices.
+Tool for inspecting and updating Harp devices, with automatic firmware and interface [code generation](https://harp-tech.org/toolkit/articles/generate.html).
 
 ## Getting Started
 
