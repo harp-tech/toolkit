@@ -77,25 +77,24 @@ internal class R_OPERATION_CTRL : Suite
     public async Task<IResult> HeartbeatEnEmitsEvents(string portName)
     {
         byte originalOpCtrl = 0;
+        ushort whoAmI = 0;
 
         try
         {
             using (var device = new AsyncDevice(portName))
             {
                 originalOpCtrl = await device.ReadByteAsync(address);
+                whoAmI = await device.ReadUInt16Async(WhoAmI.Address);
             }
             await Task.Delay(500); // The previous one needs some time to disconnect
 
-            var harpDevice = new Bonsai.Harp.Device { PortName = portName };
-            var responses = await RegisterHelpers.WriteToTransportAsync(
+            var harpDevice = new Bonsai.Harp.Device(whoAmI) { PortName = portName };
+            var messages = await RegisterHelpers.WriteToTransportAsync(
                 portName,
                 new[] { HarpMessage.FromByte(address, MessageType.Write, 0xE5) },
-                TimeSpan.FromSeconds(0.5));
-            var messages = await harpDevice.Generate()
-                .TakeUntil(Observable.Timer(TimeSpan.FromSeconds(2)))
-                .ToList();
+                TimeSpan.FromSeconds(2.0));
 
-            bool received = messages.Any(m => m.Address == 0x18 && m.MessageType == MessageType.Event);
+            bool received = messages.Any(m => m.Address == 18 && m.MessageType == MessageType.Event);
 
             return new AssertionResult(
                 received,
@@ -117,10 +116,100 @@ internal class R_OPERATION_CTRL : Suite
         }
     }
 
+    [HarpTest(Description = "Validates that HEARTBEAT_EN (bit 2) takes precedence over ALIVE_EN (bit 7): when both are set, R_HEARTBEAT events are emitted and R_TIMESTAMP_SECOND events are not.")]
+    public async Task<IResult> HeartbeatEnPrecedenceOverAliveEn(string portName)
+    {
+        byte originalOpCtrl = 0;
+        ushort whoAmI = 0;
+
+        try
+        {
+            using (var device = new AsyncDevice(portName))
+            {
+                originalOpCtrl = await device.ReadByteAsync(address);
+                whoAmI = await device.ReadUInt16Async(WhoAmI.Address);
+            }
+            await Task.Delay(500);
+
+            var harpDevice = new Bonsai.Harp.Device(whoAmI) { PortName = portName };
+            // Set both ALIVE_EN (bit 7) and HEARTBEAT_EN (bit 2) with Active mode (bit 0)
+            var messages = await RegisterHelpers.WriteToTransportAsync(
+                portName,
+                new[] { HarpMessage.FromByte(address, MessageType.Write, 0x85) },
+                TimeSpan.FromSeconds(2.0));
+
+            bool receivedHeartbeat = messages.Any(m => m.Address == 18 && m.MessageType == MessageType.Event);
+            bool receivedTimestamp = messages.Any(m => m.Address == 8 && m.MessageType == MessageType.Event);
+
+            if (!receivedHeartbeat)
+                return new AssertionResult(false, "HeartbeatEnPrecedenceOverAliveEn: no R_HEARTBEAT event received within 2s (expected HEARTBEAT_EN to take precedence).");
+            if (receivedTimestamp)
+                return new AssertionResult(false, "HeartbeatEnPrecedenceOverAliveEn: R_TIMESTAMP_SECOND event received when HEARTBEAT_EN should suppress it.");
+
+            return new AssertionResult(true, "HeartbeatEnPrecedenceOverAliveEn: R_HEARTBEAT events received and R_TIMESTAMP_SECOND correctly suppressed.");
+        }
+        catch (Exception ex)
+        {
+            return new ErrorResult(ex);
+        }
+        finally
+        {
+            await Task.Delay(200);
+            using (var device = new AsyncDevice(portName))
+            {
+                await device.CommandAsync(HarpMessage.FromByte(address, MessageType.Write, originalOpCtrl));
+            }
+        }
+    }
+
+    [HarpTest(Description = "Validates that ALIVE_EN (deprecated, bit 7) causes R_TIMESTAMP_SECOND events to be emitted when HEARTBEAT_EN is not set.")]
+    public async Task<IResult> AliveEnEmitsTimestampEvents(string portName)
+    {
+        byte originalOpCtrl = 0;
+        ushort whoAmI = 0;
+
+        try
+        {
+            using (var device = new AsyncDevice(portName))
+            {
+                originalOpCtrl = await device.ReadByteAsync(address);
+                whoAmI = await device.ReadUInt16Async(WhoAmI.Address);
+            }
+            await Task.Delay(500);
+
+            var harpDevice = new Bonsai.Harp.Device(whoAmI) { PortName = portName };
+            // Set only ALIVE_EN (bit 7) with Active mode (bit 0); HEARTBEAT_EN (bit 2) is cleared
+            var messages = await RegisterHelpers.WriteToTransportAsync(
+                portName,
+                new[] { HarpMessage.FromByte(address, MessageType.Write, 0x81) },
+                TimeSpan.FromSeconds(2.0));
+
+            bool receivedTimestamp = messages.Any(m => m.Address == 8 && m.MessageType == MessageType.Event);
+
+            if (!receivedTimestamp)
+                return new Result<bool>(false, Status.Skipped, "AliveEnEmitsTimestampEvents: ALIVE_EN is deprecated and R_TIMESTAMP_SECOND events were not emitted.");
+
+            return new AssertionResult(true, "AliveEnEmitsTimestampEvents: R_TIMESTAMP_SECOND event received within 2s.");
+        }
+        catch (Exception ex)
+        {
+            return new ErrorResult(ex);
+        }
+        finally
+        {
+            await Task.Delay(200);
+            using (var device = new AsyncDevice(portName))
+            {
+                await device.CommandAsync(HarpMessage.FromByte(address, MessageType.Write, originalOpCtrl));
+            }
+        }
+    }
+
     [HarpTest(Description = "Validates that the DUMP bit triggers a burst of all core register reads after an OpCtrl write.")]
     public async Task<IResult> RegisterDump(string portName)
     {
         byte originalOpCtrl = 0;
+        ushort whoAmI = 0;
 
         try
         {
@@ -128,9 +217,10 @@ internal class R_OPERATION_CTRL : Suite
             using (var device = new AsyncDevice(portName))
             {
                 originalOpCtrl = await device.ReadByteAsync(address);
+                whoAmI = await device.ReadUInt16Async(WhoAmI.Address);
             }
 
-            var harpDevice = new Bonsai.Harp.Device { PortName = portName };
+            var harpDevice = new Bonsai.Harp.Device(whoAmI) { PortName = portName };
             var messages = await RegisterHelpers.WriteToTransportAsync(
                 portName,
                 new[] { HarpMessage.FromByte(address, MessageType.Write, (byte)(originalOpCtrl | 0x08)) },
