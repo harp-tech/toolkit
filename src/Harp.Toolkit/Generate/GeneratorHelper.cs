@@ -41,7 +41,7 @@ public static class GeneratorHelper
             Console.Error.WriteLine(errorLog.ToString());
             return !errors.HasErrors;
         }
-        
+
         return true;
     }
 }
