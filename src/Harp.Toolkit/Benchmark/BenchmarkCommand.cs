@@ -1,5 +1,6 @@
 ﻿using System.CommandLine;
 using Spectre.Console;
+using Harp.Toolkit.Benchmark;
 using Harp.Toolkit.Benchmark.Suites;
 
 namespace Harp.Toolkit;
@@ -20,23 +21,53 @@ public class BenchmarkCommand : Command
             Description = "Show detailed results for each test.",
             Required = false,
         };
+
+        Option<string?> clockPortOption = new("--clock-port")
+        {
+            Description = "Serial port of the reference clock device. Enables clock alignment tests.",
+            Required = false,
+        };
+
+        Option<int?> regClockOption = new("--pps-address")
+        {
+            Description = "Register address on the tested device (--port) that emits an event whenever the incoming PPS signal goes high. Enables PPS alignment test.",
+            Required = false,
+        };
+
+        Option<int> clockSamplesOption = new("--clock-samples")
+        {
+            Description = "Number of PPS event pairs to collect for the PPS alignment test. Default: 5.",
+            Required = false,
+        };
+        clockSamplesOption.DefaultValueFactory = _ => 5;
+
         Options.Add(portNameOption);
         Options.Add(fileOption);
         Options.Add(verboseOption);
+        Options.Add(clockPortOption);
+        Options.Add(regClockOption);
+        Options.Add(clockSamplesOption);
         SetAction(parsedResult =>
         {
             string portName = parsedResult.GetRequiredValue(portNameOption);
             FileInfo? reportFile = parsedResult.GetValue(fileOption);
             bool verbose = parsedResult.GetValue(verboseOption);
-            return RunBenchmarks(portName, reportFile, verbose, CancellationToken.None);
+            string? clockPort = parsedResult.GetValue(clockPortOption);
+            ClockTestOptions? clockOptions = clockPort is null ? null : new ClockTestOptions(
+                ClockPort: clockPort,
+                PpsAddress: parsedResult.GetValue(regClockOption),
+                ClockSamples: parsedResult.GetValue(clockSamplesOption));
+            return RunBenchmarks(portName, reportFile, verbose, clockOptions, CancellationToken.None);
         });
     }
 
-    static async Task RunBenchmarks(string portName, FileInfo? reportFile, bool verbose, CancellationToken cancellationToken)
+    static async Task RunBenchmarks(string portName, FileInfo? reportFile, bool verbose, ClockTestOptions? clockOptions, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine($"Running tests on [bold]{portName}[/]...");
+        if (clockOptions is not null)
+            AnsiConsole.MarkupLine($"Clock reference device: [bold]{clockOptions.ClockPort}[/]");
 
-        var runner = new CoreRunner();
+        var runner = new CoreRunner(clockOptions);
         var report = new Report
         {
             DeviceName = $"Harp Device ({portName})",
@@ -142,7 +173,7 @@ public class BenchmarkCommand : Command
 
     class CoreRunner : Runner
     {
-        public CoreRunner() : base()
+        public CoreRunner(ClockTestOptions? clockOptions = null) : base()
         {
             AddSuite(new R_WHO_AM_I());
             AddSuite(new R_HW_VERSION_H());
@@ -165,6 +196,7 @@ public class BenchmarkCommand : Command
             AddSuite(new R_HEARTBEAT());
             AddSuite(new R_VERSION());
             AddSuite(new RoundTripTestSuite());
+            AddSuite(new ClockTestSuite(clockOptions));
         }
     }
 }
