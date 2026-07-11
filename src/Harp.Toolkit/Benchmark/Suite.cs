@@ -9,7 +9,14 @@ public abstract class Suite
 {
     public abstract string Description { get; }
 
-    public int TestCount => CollectTests().Count();
+    /// <summary>
+    /// Tests whose number and identity is only known at runtime.
+    /// During test collection, these will be enumerated and run
+    /// after the fixed <see cref="HarpTestAttribute"/> methods.
+    /// </summary>
+    protected virtual IReadOnlyList<DynamicTest> DynamicTests { get; } = new List<DynamicTest>();
+
+    public int TestCount => CollectTests().Count() + DynamicTests.Count;
 
     private IEnumerable<(MethodInfo Method, HarpTestAttribute Attribute)> CollectTests()
     {
@@ -56,8 +63,37 @@ public abstract class Suite
                 Description = attr.Description ?? string.Empty
             };
         }
+
+        foreach (var test in DynamicTests)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            onTestStart?.Invoke(test.Name, test.Description);
+
+            IResult testResult;
+            try
+            {
+                testResult = await test.Run(portName, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                testResult = new ErrorResult(ex);
+            }
+            yield return new MethodResult
+            {
+                Result = testResult,
+                Name = test.Name,
+                Description = test.Description
+            };
+        }
     }
 }
+
+/// <summary>
+/// A test whose name and behavior is determined at runtime rather than declared
+/// with <see cref="HarpTestAttribute"/> on a fixed method.
+/// </summary>
+public record DynamicTest(string Name, string Description, Func<string, CancellationToken, Task<IResult>> Run);
 
 public class SuiteResult
 {

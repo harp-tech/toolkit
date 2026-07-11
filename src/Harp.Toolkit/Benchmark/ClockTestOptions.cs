@@ -1,4 +1,4 @@
-namespace Harp.Toolkit.Benchmark;
+﻿namespace Harp.Toolkit.Benchmark;
 
 /// <summary>
 /// Options for clock alignment and PPS synchronization tests run against a reference clock device.

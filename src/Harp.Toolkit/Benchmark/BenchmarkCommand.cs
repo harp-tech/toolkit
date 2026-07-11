@@ -1,7 +1,9 @@
 ﻿using System.CommandLine;
 using Spectre.Console;
+using Harp.Generators;
 using Harp.Toolkit.Benchmark;
 using Harp.Toolkit.Benchmark.Suites;
+using Harp.Toolkit.Generate;
 
 namespace Harp.Toolkit;
 public class BenchmarkCommand : Command
@@ -41,12 +43,20 @@ public class BenchmarkCommand : Command
         };
         clockSamplesOption.DefaultValueFactory = _ => 5;
 
+        Option<FileInfo> deviceYmlOption = new("--device-yml")
+        {
+            Description = "Path to the device's device.yml. Enables validation of the generated C# interface against a live read of every declared register, and cross-checks WhoAmI/firmware/hardware versions.",
+            Required = false,
+        };
+        OptionValidation.AcceptExistingOnly(deviceYmlOption);
+
         Options.Add(portNameOption);
         Options.Add(fileOption);
         Options.Add(verboseOption);
         Options.Add(clockPortOption);
         Options.Add(regClockOption);
         Options.Add(clockSamplesOption);
+        Options.Add(deviceYmlOption);
         SetAction(parsedResult =>
         {
             string portName = parsedResult.GetRequiredValue(portNameOption);
@@ -57,17 +67,28 @@ public class BenchmarkCommand : Command
                 ClockPort: clockPort,
                 PpsAddress: parsedResult.GetValue(regClockOption),
                 ClockSamples: parsedResult.GetValue(clockSamplesOption));
-            return RunBenchmarks(portName, reportFile, verbose, clockOptions, CancellationToken.None);
+            FileInfo? deviceYml = parsedResult.GetValue(deviceYmlOption);
+            return RunBenchmarks(portName, reportFile, verbose, clockOptions, deviceYml, CancellationToken.None);
         });
     }
 
-    static async Task RunBenchmarks(string portName, FileInfo? reportFile, bool verbose, ClockTestOptions? clockOptions, CancellationToken cancellationToken)
+    static async Task RunBenchmarks(string portName, FileInfo? reportFile, bool verbose, ClockTestOptions? clockOptions, FileInfo? deviceYml, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine($"Running tests on [bold]{portName}[/]...");
         if (clockOptions is not null)
             AnsiConsole.MarkupLine($"Clock reference device: [bold]{clockOptions.ClockPort}[/]");
 
-        var runner = new CoreRunner(clockOptions);
+        DeviceMetadata? deviceMetadata = null;
+        string? deviceRawYaml = null;
+        if (deviceYml is not null)
+        {
+            AnsiConsole.Markup($"Loading device metadata from [bold]{deviceYml.FullName}[/]...");
+            deviceMetadata = GeneratorHelper.ReadDeviceMetadata(deviceYml.FullName);
+            deviceRawYaml = await File.ReadAllTextAsync(deviceYml.FullName, cancellationToken);
+            AnsiConsole.MarkupLine($" [green]Done![/] ({deviceMetadata.Registers.Count} registers)");
+        }
+
+        var runner = new CoreRunner(clockOptions, deviceMetadata, deviceRawYaml);
         var report = new Report
         {
             DeviceName = $"Harp Device ({portName})",
@@ -173,7 +194,10 @@ public class BenchmarkCommand : Command
 
     class CoreRunner : Runner
     {
-        public CoreRunner(ClockTestOptions? clockOptions = null) : base()
+        public CoreRunner(
+            ClockTestOptions? clockOptions = null,
+            DeviceMetadata? deviceMetadata = null,
+            string? deviceRawYaml = null) : base()
         {
             AddSuite(new R_WHO_AM_I());
             AddSuite(new R_HW_VERSION_H());
@@ -197,6 +221,7 @@ public class BenchmarkCommand : Command
             AddSuite(new R_VERSION());
             AddSuite(new RoundTripTestSuite());
             AddSuite(new ClockTestSuite(clockOptions));
+            AddSuite(new DeviceInterfaceSuite(deviceMetadata, deviceRawYaml));
         }
     }
 }
