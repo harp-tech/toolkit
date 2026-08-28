@@ -28,7 +28,7 @@ class GenerateRegisterMetadataCommand : Command
         {
             var outputPath = parseResult.GetRequiredValue(outputPathOption);
             var registerWorksheetPath = parseResult.GetRequiredValue(registerWorksheetPathArgument);
-            var deviceInfo = new DeviceInfo();
+            var deviceMetadata = new DeviceMetadata();
             var iosMetadata = new Dictionary<string, PortPinInfo>();
 
             System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
@@ -37,34 +37,34 @@ class GenerateRegisterMetadataCommand : Command
             var result = reader.AsDataSet();
             foreach (DataTable table in result.Tables)
             {
-                ParseMetadataTable(table, deviceInfo);
-                ParseRegisterTable(table, deviceInfo);
+                ParseMetadataTable(table, deviceMetadata);
+                ParseRegisterTable(table, deviceMetadata);
                 ParseIosTable(table, iosMetadata);
             }
 
             var registerMetadataPath = Path.Combine(outputPath.FullName, "device.yml");
             var iosMetadataPath = Path.Combine(outputPath.FullName, "ios.yml");
-            File.WriteAllText(registerMetadataPath, MetadataSerializer.Instance.Serialize(deviceInfo));
+            File.WriteAllText(registerMetadataPath, MetadataSerializer.Instance.Serialize(deviceMetadata));
             File.WriteAllText(iosMetadataPath, MetadataSerializer.Instance.Serialize(iosMetadata));
         });
     }
 
-    static void ParseMetadataTable(DataTable table, DeviceInfo deviceInfo)
+    static void ParseMetadataTable(DataTable table, DeviceMetadata deviceMetadata)
     {
         if (table.TableName != "meta data")
             return;
 
-        deviceInfo.WhoAmI = Convert.ToUInt16(table.Rows[0][1]);
+        deviceMetadata.WhoAmI = Convert.ToUInt16(table.Rows[0][1]);
         var fwMajor = Convert.ToUInt16(table.Rows[1][1]);
         var fwMinor = Convert.ToUInt16(table.Rows[2][1]);
-        deviceInfo.FirmwareVersion = new HarpVersion(fwMajor, fwMinor);
+        deviceMetadata.FirmwareVersion = new HarpVersion(fwMajor, fwMinor);
         var hwMajor = Convert.ToUInt16(table.Rows[3][1]);
         var hwMinor = Convert.ToUInt16(table.Rows[4][1]);
-        deviceInfo.HardwareTargets = new HarpVersion(hwMajor, hwMinor);
-        deviceInfo.Device = (string)table.Rows[6][1];
+        deviceMetadata.HardwareTargets = new HarpVersion(hwMajor, hwMinor);
+        deviceMetadata.Device = (string)table.Rows[6][1];
     }
 
-    static void ParseRegisterTable(DataTable table, DeviceInfo deviceInfo)
+    static void ParseRegisterTable(DataTable table, DeviceMetadata deviceMetadata)
     {
         if (table.TableName != "registers")
             return;
@@ -84,7 +84,7 @@ class GenerateRegisterMetadataCommand : Command
                 Type = (PayloadType)Enum.Parse(typeof(PayloadType), ((string)row[2]).Replace("I", "S"), ignoreCase: true),
                 Description = row[6] as string ?? string.Empty
             };
-            deviceInfo.Registers[registerName] = registerInfo;
+            deviceMetadata.Registers[registerName] = registerInfo;
         }
     }
 
