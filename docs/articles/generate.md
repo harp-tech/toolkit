@@ -26,11 +26,27 @@ registers:
 
 ## Generating device interface code
 
-A complete reactive interface to communicate with the device can be generated from the `device.yml` metadata file.
+A device interface can be generated from the `device.yml` metadata file, in either of two target languages. In both, the generated code declares a type for every register, together with the enum and payload types they are built from, and a map from register address to type.
+
+A register or payload member may also declare a `converter`, for an `interfaceType` the generator cannot synthesize from the metadata alone. The implementation is then written by hand and referenced by the generated code.
+
+The .NET interface is the default target. The language can also be named explicitly, and a metadata path given on the command line precedes it.
+
+```ps1
+dotnet harp.toolkit generate interface path/to/device.yml csharp
+```
+
+### .NET interface
+
+An interface for reactive programming targeting [Bonsai.Harp](https://harp-tech.org/api/Bonsai.Harp.html).
 
 ```ps1
 dotnet harp.toolkit generate interface
 ```
+
+Registers are additionally exposed as [operators](https://harp-tech.org/articles/operators.html), alongside an asynchronous API for use from .NET applications.
+
+Custom converters are supplied by implementing the generated `ParsePayload` and `FormatPayload` partial methods in a hand-written partial class.
 
 The following options are available to configure the generated output.
 
@@ -39,14 +55,19 @@ The following options are available to configure the generated output.
 -ns, --namespace <ns>
 ```
 
-Specifies the namespace for the generated code. The default namespace is `Harp.DeviceName` where `DeviceName` is the name of the device specified in the `device.yml` file.
+Specifies the namespace for the generated code. The default namespace is `Harp.DeviceName` where `DeviceName` is the name of the device specified in the `device.yml` file. This option applies only to the .NET interface.
 
-#### Output location
+### Python interface
+
+An interface targeting [Harp Python](https://harp-tech.org/python).
+
 ```ps1
--o, --output <o>
+dotnet harp.toolkit generate interface python
 ```
 
-Specifies the location where to place the generated output. The default is the current directory. Usually this will point to the folder of your `.csproj` interface project.
+Custom converters are supplied in a companion `converters` module, which the generated module imports from.
+
+The `--namespace` option does not apply to this target, since the generated module declares no namespace, and is rejected if supplied.
 
 ## Generating device firmware code
 
@@ -65,13 +86,6 @@ The following options are available to configure the generated output.
 
 Specifies whether to generate implementation stubs. In general this should be run only when starting development of a new device, to provide templates for all required functions. It should also be run when significantly changing the device metadata file, to ensure alignment between firmware and device interface naming conventions.
 
-#### Output location
-```ps1
--o, --output <o>
-```
-
-Specifies the location where to place the generated output. The default is the current directory. Usually this will point to the folder of your `.cproj` firmware project.
-
 ## Generating device metadata
 
 The device metadata and IO pin configuration files can be generated from legacy XLS worksheet files describing the device. Both the `device.yml` and `ios.yml` will be generated from a single `registers.xls` file.
@@ -80,12 +94,15 @@ The device metadata and IO pin configuration files can be generated from legacy 
 dotnet harp.toolkit generate metadata <registers.xls>
 ```
 
-#### Output location
+> [!Warning]
+> The `registers.xls` file format is deprecated and is no longer recommended for editing device metadata as it lacks important features of the new YAML format, including complex payload spec formats and mixed access registers.
+
+## Output location
+
+Every generation command accepts an output location.
+
 ```ps1
 -o, --output <o>
 ```
 
-Specifies the location where to place the generated output. The default is the current directory.
-
-> [!Warning]
-> The `registers.xls` file format is deprecated and is no longer recommended for editing device metadata as it lacks important features of the new YAML format, including complex payload spec formats and mixed access registers.
+Specifies the location where to place the generated output. The default is the current directory. For an interface this usually points to the folder of your `.csproj` project, and for firmware to the folder of your `.cproj` project.
