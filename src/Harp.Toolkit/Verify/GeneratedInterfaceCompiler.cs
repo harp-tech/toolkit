@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Extensions.DependencyModel;
 
-namespace Harp.Toolkit.Benchmark;
+namespace Harp.Toolkit.Verify;
 
 /// <summary>
 /// Generates the C# interface for a device.yml (via <see cref="InterfaceGenerator"/>),

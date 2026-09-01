@@ -1,15 +1,15 @@
 ﻿using System.CommandLine;
 using Spectre.Console;
 using Harp.Generators;
-using Harp.Toolkit.Benchmark;
-using Harp.Toolkit.Benchmark.Suites;
+using Harp.Toolkit.Verify;
+using Harp.Toolkit.Verify.Suites;
 using Harp.Toolkit.Generate;
 
 namespace Harp.Toolkit;
-public class BenchmarkCommand : Command
+public class VerifyCommand : Command
 {
-    public BenchmarkCommand()
-        : base("benchmark", "Run benchmark tests on the device.")
+    public VerifyCommand()
+        : base("verify", "Verify device conformance against the Harp specification.")
     {
         PortNameOption portNameOption = new();
         Option<FileInfo?> fileOption = new("--report")
@@ -68,11 +68,11 @@ public class BenchmarkCommand : Command
                 PpsAddress: parsedResult.GetValue(regClockOption),
                 ClockSamples: parsedResult.GetValue(clockSamplesOption));
             FileInfo? deviceYml = parsedResult.GetValue(deviceYmlOption);
-            return RunBenchmarks(portName, reportFile, verbose, clockOptions, deviceYml, CancellationToken.None);
+            return RunVerification(portName, reportFile, verbose, clockOptions, deviceYml, CancellationToken.None);
         });
     }
 
-    static async Task RunBenchmarks(string portName, FileInfo? reportFile, bool verbose, ClockTestOptions? clockOptions, FileInfo? deviceYml, CancellationToken cancellationToken)
+    static async Task RunVerification(string portName, FileInfo? reportFile, bool verbose, ClockTestOptions? clockOptions, FileInfo? deviceYml, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine($"Running tests on [bold]{portName}[/]...");
         if (clockOptions is not null)

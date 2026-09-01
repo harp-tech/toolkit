@@ -1,9 +1,9 @@
 ﻿using System.Reflection;
 using Bonsai.Harp;
 using Harp.Generators;
-using Harp.Toolkit.Benchmark;
+using Harp.Toolkit.Verify;
 
-namespace Harp.Toolkit.Benchmark.Suites;
+namespace Harp.Toolkit.Verify.Suites;
 
 /// <summary>
 /// Validates a live device against the C# interface actually generated from device.yml,

@@ -1,6 +1,6 @@
 ﻿using Bonsai.Harp;
 
-namespace Harp.Toolkit.Benchmark.Suites;
+namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_CORE_VERSION_H : Suite
 {

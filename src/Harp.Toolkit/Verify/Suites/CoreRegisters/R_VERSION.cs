@@ -1,14 +1,14 @@
 ﻿using Bonsai.Harp;
 
-namespace Harp.Toolkit.Benchmark.Suites;
+namespace Harp.Toolkit.Verify.Suites;
 
-internal class R_TAG : Suite
+internal class R_VERSION : Suite
 {
-    private const byte address = 0x11;
-    private const int expectedLength = 8;
-    public override string Description => "Tag Register Tests";
+    private const byte address = 0x13;
+    private const int expectedLength = 32;
+    public override string Description => "Version Register Tests";
 
-    [HarpTest(Description = "Validates that Tag register is readable.")]
+    [HarpTest(Description = "Validates that Version register is readable.")]
     public async Task<IResult> IsReadable(string portName)
     {
         using (var device = new AsyncDevice(portName))
@@ -16,7 +16,7 @@ internal class R_TAG : Suite
             try
             {
                 await device.ReadByteArrayAsync(address);
-                return new AssertionResult(true, "Tag is readable.");
+                return new AssertionResult(true, "Version is readable.");
             }
             catch (Exception ex)
             {
@@ -25,16 +25,16 @@ internal class R_TAG : Suite
         }
     }
 
-    [HarpTest(Description = "Validates that Tag register has exactly 8 bytes.")]
+    [HarpTest(Description = "Validates that Version register has exactly 32 bytes.")]
     public async Task<IResult> AssertLength(string portName)
     {
         using (var device = new AsyncDevice(portName))
         {
-            return await RegisterHelpers.AssertReadableArrayAsync(device, address, expectedLength, "Tag");
+            return await RegisterHelpers.AssertReadableArrayAsync(device, address, expectedLength, "Version");
         }
     }
 
-    [HarpTest(Description = "Validates that Tag register is NOT writable.")]
+    [HarpTest(Description = "Validates that Version register is NOT writable.")]
     public async Task<IResult> IsNotWritable(string portName)
     {
         using (var device = new AsyncDevice(portName))
@@ -44,8 +44,8 @@ internal class R_TAG : Suite
             return new AssertionResult(
                 rejected,
                 x => x
-                    ? "Tag register correctly rejected write."
-                    : "Tag register should NOT be writable.");
+                    ? "Version register correctly rejected write."
+                    : "Version register should NOT be writable.");
         }
     }
 }

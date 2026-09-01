@@ -2,7 +2,7 @@
 using System.Reactive.Linq;
 using System.Collections.Concurrent;
 
-namespace Harp.Toolkit.Benchmark.Suites;
+namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_OPERATION_CTRL : Suite
 {

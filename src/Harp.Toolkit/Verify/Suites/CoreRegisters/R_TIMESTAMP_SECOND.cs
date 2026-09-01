@@ -1,7 +1,7 @@
 ﻿
 using Bonsai.Harp;
 using System.Diagnostics;
-namespace Harp.Toolkit.Benchmark.Suites;
+namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_TIMESTAMP_SECOND : Suite
 {

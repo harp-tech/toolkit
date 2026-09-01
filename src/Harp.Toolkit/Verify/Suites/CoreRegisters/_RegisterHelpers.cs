@@ -3,7 +3,7 @@ using Bonsai.Harp;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
-namespace Harp.Toolkit.Benchmark.Suites;
+namespace Harp.Toolkit.Verify.Suites;
 
 internal static class RegisterHelpers
 {

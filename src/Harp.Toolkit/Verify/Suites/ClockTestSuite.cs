@@ -1,8 +1,8 @@
 ﻿
 using Bonsai.Harp;
-using Harp.Toolkit.Benchmark;
+using Harp.Toolkit.Verify;
 
-namespace Harp.Toolkit.Benchmark.Suites;
+namespace Harp.Toolkit.Verify.Suites;
 
 internal class ClockTestSuite : Suite
 {
