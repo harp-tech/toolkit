@@ -24,11 +24,13 @@ Tool for inspecting, updating and interfacing with Harp devices, with automatic 
     dotnet harp.toolkit list
     ```
 
-5. To display info about a device connected to a specific serial port, with an optional timeout in milliseconds:
+5. To display info about a device connected to a specific serial port:
 
     ```cmd
-    dotnet harp.toolkit --port COM4 --timeout 1000
+    dotnet harp.toolkit --port COM4
     ```
+
+    Each read waits up to 2000 milliseconds for a response. Pass `--timeout` to change that default, or `--timeout -1` to wait indefinitely.
 
 6. To update the device firmware from a local HEX file:
 
