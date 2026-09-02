@@ -4,21 +4,21 @@ namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_UID : Suite
 {
-    private const byte address = 0x10;
-    private const byte expected_length = 16;
+    internal const byte Address = 16;
+    private const byte ExpectedLength = 16;
     public override string Description => "UID Register Tests";
 
-    [HarpTest(Description = "Validates whether the UID register is 0 and thus likely not in use.")]
+    [HarpTest(Description = "Validates that UID register has exactly 16 bytes.")]
     public async Task<IResult> AssertLength(string portName)
     {
         using (var device = new AsyncDevice(portName))
         {
-            var value = await device.ReadByteArrayAsync(address);
+            var value = await device.ReadByteArrayAsync(Address);
             return new AssertionResult(
-                value.Length == expected_length,
+                value.Length == ExpectedLength,
                 x => x ?
-                    $"Length is 16 as expected." :
-                    $"Expected length of register to be 16, got {value.Length} instead");
+                    $"Length is {ExpectedLength} as expected." :
+                    $"Expected length of register to be {ExpectedLength}, got {value.Length} instead.");
         }
     }
 
@@ -27,8 +27,8 @@ internal class R_UID : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var value = await device.ReadByteArrayAsync(address);
-            string msg = value.All(x => x == 0) ? "Value of all bytes is 0. Register likely not being used" : $"Register returned a non-zero value: {BitConverter.ToString(value)}";
+            var value = await device.ReadByteArrayAsync(Address);
+            string msg = value.All(x => x == 0) ? "Value of all bytes is 0. Register likely not being used." : $"Register returned a non-zero value: {BitConverter.ToString(value)}.";
             return new Result<byte[]>(
                 value,
                 Status.Passed,

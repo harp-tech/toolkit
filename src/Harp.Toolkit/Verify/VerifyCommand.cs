@@ -30,9 +30,9 @@ public class VerifyCommand : Command
             Required = false,
         };
 
-        Option<int?> regClockOption = new("--pps-address")
+        Option<int?> ppsEventOption = new("--pps-event")
         {
-            Description = "Register address on the tested device (--port) that emits an event whenever the incoming PPS signal goes high. Enables PPS alignment test.",
+            Description = "Address of the register on the tested device (--port) that reports the incoming PPS pulse from the reference clock device. Enables the PPS alignment test.",
             Required = false,
         };
 
@@ -54,7 +54,7 @@ public class VerifyCommand : Command
         Options.Add(fileOption);
         Options.Add(verboseOption);
         Options.Add(clockPortOption);
-        Options.Add(regClockOption);
+        Options.Add(ppsEventOption);
         Options.Add(clockSamplesOption);
         Options.Add(deviceYmlOption);
         SetAction(parsedResult =>
@@ -65,7 +65,7 @@ public class VerifyCommand : Command
             string? clockPort = parsedResult.GetValue(clockPortOption);
             ClockTestOptions? clockOptions = clockPort is null ? null : new ClockTestOptions(
                 ClockPort: clockPort,
-                PpsAddress: parsedResult.GetValue(regClockOption),
+                PpsEvent: parsedResult.GetValue(ppsEventOption),
                 ClockSamples: parsedResult.GetValue(clockSamplesOption));
             FileInfo? deviceYml = parsedResult.GetValue(deviceYmlOption);
             return RunVerification(portName, reportFile, verbose, clockOptions, deviceYml, CancellationToken.None);
@@ -142,7 +142,7 @@ public class VerifyCommand : Command
 
                     if (test.Result is NumericBenchmarkResult bsr)
                     {
-                        details = $"Mean: {bsr.Summary.Mean:F4}\nMedian: {bsr.Summary.Median:F4}\nStdDev: {bsr.Summary.StdDev:F4}\nMin: {bsr.Summary.Min:F4}\nMax: {bsr.Summary.Max:F4}\nPercentiles: 99th={bsr.Summary.Percentile99:F4}, 01th={bsr.Summary.Percentile01:F4}";
+                        details = $"Mean: {bsr.Summary.Mean:F4}\nMedian: {bsr.Summary.Median:F4}\nStdDev: {bsr.Summary.StdDev:F4}\nMin: {bsr.Summary.Min:F4}\nMax: {bsr.Summary.Max:F4}\nPercentiles: 99th={bsr.Summary.Percentile99:F4}, 1st={bsr.Summary.Percentile01:F4}";
                     }
                     else if (test.Result is ErrorResult er)
                     {
@@ -150,7 +150,7 @@ public class VerifyCommand : Command
                     }
                     else
                     {
-                        var valProp = test.Result?.GetType().GetProperty("Value");
+                        var valProp = test.Result.GetType().GetProperty("Value");
                         if (valProp != null)
                         {
                             var val = valProp.GetValue(test.Result);

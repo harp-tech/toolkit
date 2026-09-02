@@ -15,8 +15,8 @@ internal class R_ASSEMBLY_VERSION : Suite
             return new AssertionResult(
                 value == 0x00,
                 x => x ?
-                    $"AssemblyVersion register correctly returned 0x00." :
-                    $"AssemblyVersion register returned a non-zero value (0x{value:X2})");
+                    "AssemblyVersion register correctly returned 0x00." :
+                    $"AssemblyVersion register returned a non-zero value (0x{value:X2}).");
         }
     }
 }

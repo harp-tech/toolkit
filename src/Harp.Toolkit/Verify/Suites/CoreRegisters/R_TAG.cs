@@ -4,8 +4,8 @@ namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_TAG : Suite
 {
-    private const byte address = 0x11;
-    private const int expectedLength = 8;
+    private const byte Address = 17;
+    private const int ExpectedLength = 8;
     public override string Description => "Tag Register Tests";
 
     [HarpTest(Description = "Validates that Tag register is readable.")]
@@ -15,7 +15,7 @@ internal class R_TAG : Suite
         {
             try
             {
-                await device.ReadByteArrayAsync(address);
+                await device.ReadByteArrayAsync(Address);
                 return new AssertionResult(true, "Tag is readable.");
             }
             catch (Exception ex)
@@ -30,7 +30,7 @@ internal class R_TAG : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            return await RegisterHelpers.AssertReadableArrayAsync(device, address, expectedLength, "Tag");
+            return await RegisterHelpers.AssertReadableArrayAsync(device, Address, ExpectedLength, "Tag");
         }
     }
 
@@ -39,7 +39,7 @@ internal class R_TAG : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var req = HarpMessage.FromByte(address, MessageType.Write, 0x00);
+            var req = HarpMessage.FromByte(Address, MessageType.Write, 0x00);
             var rejected = await RegisterHelpers.IsWriteRejectedAsync(device, req);
             return new AssertionResult(
                 rejected,

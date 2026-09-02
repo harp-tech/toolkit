@@ -4,7 +4,6 @@ namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_FW_VERSION_H : Suite
 {
-    private const byte address = 0x06;
     public override string Description => "Firmware Version High Register Tests";
 
     [HarpTest(Description = "Validates that FwVersionHigh matches byte 3 of R_VERSION.")]
@@ -12,8 +11,8 @@ internal class R_FW_VERSION_H : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var versionArray = await device.ReadByteArrayAsync(0x13);
-            var registerValue = await device.ReadByteAsync(address);
+            var versionArray = await device.ReadByteArrayAsync(Version.Address);
+            var registerValue = await device.ReadByteAsync(FirmwareVersionHigh.Address);
             return new AssertionResult(
                 registerValue == versionArray[3],
                 x => x

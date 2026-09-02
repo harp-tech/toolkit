@@ -5,7 +5,6 @@ namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_CLOCK_CONFIG : Suite
 {
-    private const byte address = 0x0E;
     public override string Description => "Clock Configuration Register Tests";
 
     [HarpTest(Description = "Validates that ClockConfig register is readable.")]
@@ -13,7 +12,7 @@ internal class R_CLOCK_CONFIG : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            return await RegisterHelpers.AssertReadableAsync(a => device.ReadByteAsync(a), address, "ClockConfig");
+            return await RegisterHelpers.AssertReadableAsync(a => device.ReadByteAsync(a), ClockConfiguration.Address, "ClockConfig");
         }
     }
 
@@ -22,7 +21,7 @@ internal class R_CLOCK_CONFIG : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var value = await device.ReadByteAsync(address);
+            var value = await device.ReadByteAsync(ClockConfiguration.Address);
             bool repAble = (value & (1 << 3)) != 0;
             bool genAble = (value & (1 << 4)) != 0;
             StringBuilder sb = new StringBuilder("ClockConfig sync capability:");

@@ -1,4 +1,4 @@
-﻿using Bonsai.Harp;
+﻿﻿using Bonsai.Harp;
 using System.Reactive.Linq;
 using System.Collections.Concurrent;
 
@@ -6,7 +6,6 @@ namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_OPERATION_CTRL : Suite
 {
-    private const byte address = 0x0A;
     public override string Description => "Operation Control Register Tests";
 
     [HarpTest(Description = "Validates that OP_MODE bits can be round-tripped between Standby (0) and Active (1).")]
@@ -14,15 +13,15 @@ internal class R_OPERATION_CTRL : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var original = await device.ReadByteAsync(address);
+            var original = await device.ReadByteAsync(OperationControl.Address);
             byte currentMode = (byte)(original & 0x03);
             byte newMode = currentMode == 0x01 ? (byte)0x00 : (byte)0x01;
             byte newValue = (byte)((original & ~0x03) | newMode);
 
             try
             {
-                await device.CommandAsync(HarpMessage.FromByte(address, MessageType.Write, newValue));
-                var readBack = await device.ReadByteAsync(address);
+                await device.CommandAsync(HarpMessage.FromByte(OperationControl.Address, MessageType.Write, newValue));
+                var readBack = await device.ReadByteAsync(OperationControl.Address);
                 byte readMode = (byte)(readBack & 0x03);
 
                 return new AssertionResult(
@@ -36,7 +35,7 @@ internal class R_OPERATION_CTRL : Suite
                 // Always restore original state
                 try
                 {
-                    await device.CommandAsync(HarpMessage.FromByte(address, MessageType.Write, original));
+                    await device.CommandAsync(HarpMessage.FromByte(OperationControl.Address, MessageType.Write, original));
                 }
                 catch
                 {
@@ -83,7 +82,7 @@ internal class R_OPERATION_CTRL : Suite
         {
             using (var device = new AsyncDevice(portName))
             {
-                originalOpCtrl = await device.ReadByteAsync(address);
+                originalOpCtrl = await device.ReadByteAsync(OperationControl.Address);
                 whoAmI = await device.ReadUInt16Async(WhoAmI.Address);
             }
             await Task.Delay(500); // The previous one needs some time to disconnect
@@ -91,7 +90,7 @@ internal class R_OPERATION_CTRL : Suite
             var harpDevice = new Bonsai.Harp.Device(whoAmI) { PortName = portName };
             var messages = await RegisterHelpers.WriteToTransportAsync(
                 portName,
-                new[] { HarpMessage.FromByte(address, MessageType.Write, 0xE5) },
+                new[] { HarpMessage.FromByte(OperationControl.Address, MessageType.Write, 0xE5) },
                 TimeSpan.FromSeconds(2.0));
 
             bool received = messages.Any(m => m.Address == 18 && m.MessageType == MessageType.Event);
@@ -111,7 +110,7 @@ internal class R_OPERATION_CTRL : Suite
             await Task.Delay(200); // Wait for port to be released before reopening
             using (var device = new AsyncDevice(portName))
             {
-                await device.CommandAsync(HarpMessage.FromByte(address, MessageType.Write, originalOpCtrl));
+                await device.CommandAsync(HarpMessage.FromByte(OperationControl.Address, MessageType.Write, originalOpCtrl));
             }
         }
     }
@@ -126,7 +125,7 @@ internal class R_OPERATION_CTRL : Suite
         {
             using (var device = new AsyncDevice(portName))
             {
-                originalOpCtrl = await device.ReadByteAsync(address);
+                originalOpCtrl = await device.ReadByteAsync(OperationControl.Address);
                 whoAmI = await device.ReadUInt16Async(WhoAmI.Address);
             }
             await Task.Delay(500);
@@ -135,7 +134,7 @@ internal class R_OPERATION_CTRL : Suite
             // Set both ALIVE_EN (bit 7) and HEARTBEAT_EN (bit 2) with Active mode (bit 0)
             var messages = await RegisterHelpers.WriteToTransportAsync(
                 portName,
-                new[] { HarpMessage.FromByte(address, MessageType.Write, 0x85) },
+                new[] { HarpMessage.FromByte(OperationControl.Address, MessageType.Write, 0x85) },
                 TimeSpan.FromSeconds(2.0));
 
             bool receivedHeartbeat = messages.Any(m => m.Address == 18 && m.MessageType == MessageType.Event);
@@ -157,7 +156,7 @@ internal class R_OPERATION_CTRL : Suite
             await Task.Delay(200);
             using (var device = new AsyncDevice(portName))
             {
-                await device.CommandAsync(HarpMessage.FromByte(address, MessageType.Write, originalOpCtrl));
+                await device.CommandAsync(HarpMessage.FromByte(OperationControl.Address, MessageType.Write, originalOpCtrl));
             }
         }
     }
@@ -172,7 +171,7 @@ internal class R_OPERATION_CTRL : Suite
         {
             using (var device = new AsyncDevice(portName))
             {
-                originalOpCtrl = await device.ReadByteAsync(address);
+                originalOpCtrl = await device.ReadByteAsync(OperationControl.Address);
                 whoAmI = await device.ReadUInt16Async(WhoAmI.Address);
             }
             await Task.Delay(500);
@@ -181,7 +180,7 @@ internal class R_OPERATION_CTRL : Suite
             // Set only ALIVE_EN (bit 7) with Active mode (bit 0); HEARTBEAT_EN (bit 2) is cleared
             var messages = await RegisterHelpers.WriteToTransportAsync(
                 portName,
-                new[] { HarpMessage.FromByte(address, MessageType.Write, 0x81) },
+                new[] { HarpMessage.FromByte(OperationControl.Address, MessageType.Write, 0x81) },
                 TimeSpan.FromSeconds(2.0));
 
             bool receivedTimestamp = messages.Any(m => m.Address == 8 && m.MessageType == MessageType.Event);
@@ -200,7 +199,7 @@ internal class R_OPERATION_CTRL : Suite
             await Task.Delay(200);
             using (var device = new AsyncDevice(portName))
             {
-                await device.CommandAsync(HarpMessage.FromByte(address, MessageType.Write, originalOpCtrl));
+                await device.CommandAsync(HarpMessage.FromByte(OperationControl.Address, MessageType.Write, originalOpCtrl));
             }
         }
     }
@@ -216,17 +215,17 @@ internal class R_OPERATION_CTRL : Suite
             // Read original state before modifying
             using (var device = new AsyncDevice(portName))
             {
-                originalOpCtrl = await device.ReadByteAsync(address);
+                originalOpCtrl = await device.ReadByteAsync(OperationControl.Address);
                 whoAmI = await device.ReadUInt16Async(WhoAmI.Address);
             }
 
             var harpDevice = new Bonsai.Harp.Device(whoAmI) { PortName = portName };
             var messages = await RegisterHelpers.WriteToTransportAsync(
                 portName,
-                new[] { HarpMessage.FromByte(address, MessageType.Write, (byte)(originalOpCtrl | 0x08)) },
+                new[] { HarpMessage.FromByte(OperationControl.Address, MessageType.Write, (byte)(originalOpCtrl | 0x08)) },
                 TimeSpan.FromSeconds(1));
 
-            var opRegWriteResponse = messages.FirstOrDefault(m => m.Address == address && m.MessageType == MessageType.Write);
+            var opRegWriteResponse = messages.FirstOrDefault(m => m.Address == OperationControl.Address && m.MessageType == MessageType.Write);
             if (opRegWriteResponse == null)
             {
                 return new AssertionResult(false, "No response received for OpCtrl write.");
@@ -253,21 +252,21 @@ internal class R_OPERATION_CTRL : Suite
             // Ensure we restore original state even though DUMP is transient
             using (var device = new AsyncDevice(portName))
             {
-                await device.CommandAsync(HarpMessage.FromByte(address, MessageType.Write, originalOpCtrl));
+                await device.CommandAsync(HarpMessage.FromByte(OperationControl.Address, MessageType.Write, originalOpCtrl));
             }
         }
     }
 
     private static async Task<IResult> TestOptionalBitAsync(AsyncDevice device, string bitName, byte bitMask)
     {
-        var original = await device.ReadByteAsync(address);
+        var original = await device.ReadByteAsync(OperationControl.Address);
         byte toggled = (byte)(original ^ bitMask);
 
         try
         {
             try
             {
-                await device.CommandAsync(HarpMessage.FromByte(address, MessageType.Write, toggled));
+                await device.CommandAsync(HarpMessage.FromByte(OperationControl.Address, MessageType.Write, toggled));
             }
             catch (HarpException)
             {
@@ -275,7 +274,7 @@ internal class R_OPERATION_CTRL : Suite
                     $"{bitName} is optional/deprecated and not supported by this device.");
             }
 
-            var readBack = await device.ReadByteAsync(address);
+            var readBack = await device.ReadByteAsync(OperationControl.Address);
             bool bitChanged = (readBack & bitMask) == (toggled & bitMask);
 
             return new AssertionResult(
@@ -288,7 +287,7 @@ internal class R_OPERATION_CTRL : Suite
         {
             try
             {
-                await device.CommandAsync(HarpMessage.FromByte(address, MessageType.Write, original));
+                await device.CommandAsync(HarpMessage.FromByte(OperationControl.Address, MessageType.Write, original));
             }
             catch
             {

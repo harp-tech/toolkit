@@ -4,7 +4,7 @@ namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_HEARTBEAT : Suite
 {
-    private const byte address = 18;
+    private const byte Address = 18;
     public override string Description => "Heartbeat Register Tests";
 
     [HarpTest(Description = "Validates that Heartbeat register is readable.")]
@@ -12,7 +12,7 @@ internal class R_HEARTBEAT : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            return await RegisterHelpers.AssertReadableAsync(a => device.ReadUInt16Async(a), address, "Heartbeat");
+            return await RegisterHelpers.AssertReadableAsync(a => device.ReadUInt16Async(a), Address, "Heartbeat");
         }
     }
 
@@ -21,7 +21,7 @@ internal class R_HEARTBEAT : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var req = HarpMessage.FromByte(address, MessageType.Write, 0x00);
+            var req = HarpMessage.FromByte(Address, MessageType.Write, 0x00);
             var rejected = await RegisterHelpers.IsWriteRejectedAsync(device, req);
             return new AssertionResult(
                 rejected,

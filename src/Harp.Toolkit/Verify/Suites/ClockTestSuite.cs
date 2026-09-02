@@ -6,7 +6,6 @@ namespace Harp.Toolkit.Verify.Suites;
 
 internal class ClockTestSuite : Suite
 {
-    private const byte OperationControlAddress = 0x0A;
     private readonly ClockTestOptions? options;
 
     public ClockTestSuite(ClockTestOptions? options)
@@ -45,42 +44,42 @@ internal class ClockTestSuite : Suite
     }
 
     [HarpTest(Description = "Subscribes to PPS events on both devices and compares timestamps to measure hardware clock synchronization accuracy.")]
-    public async Task<IResult> PPSEventAlignment(string portName)
+    public async Task<IResult> PpsEventAlignment(string portName)
     {
         if (options is null)
             return new Result<bool>(false, Status.Skipped, "No clock port provided (--clock-port).");
-        if (!options.PpsAddress.HasValue)
-            return new Result<bool>(false, Status.Skipped, "No tested device register provided (--reg-clock).");
+        if (!options.PpsEvent.HasValue)
+            return new Result<bool>(false, Status.Skipped, "No tested device register provided (--pps-event).");
 
-        // The clock device (WhiteRabbit) emits a TimestampSecond event (0x08) on every PPS tick.
+        // The clock device (WhiteRabbit) emits a TimestampSecond event on every PPS tick.
         // ALIVE_EN (0x80) | OP_MODE (0x01) enables those events.
-        // TODO: consider also supporting Heartbeat (0x12) via HEARTBEAT_EN (0x04) | OP_MODE (0x01).
-        const int clockDeviceReg = 0x08;
+        // TODO: consider also supporting Heartbeat via HEARTBEAT_EN (0x04) | OP_MODE (0x01).
+        const int clockDeviceReg = TimestampSeconds.Address;
         const byte clockDeviceOpCtrl = 0x81;
 
         var listenDuration = TimeSpan.FromSeconds(options.ClockSamples + 5);
         var allMessages = await Task.WhenAll(
             RegisterHelpers.WriteToTransportAsync(
                 options.ClockPort,
-                [HarpMessage.FromByte(OperationControlAddress, MessageType.Write, clockDeviceOpCtrl)],
+                [HarpMessage.FromByte(OperationControl.Address, MessageType.Write, clockDeviceOpCtrl)],
                 listenDuration),
             RegisterHelpers.WriteToTransportAsync(
                 portName,
-                [HarpMessage.FromByte(OperationControlAddress, MessageType.Write, 0x01)],
+                [HarpMessage.FromByte(OperationControl.Address, MessageType.Write, 0x01)],
                 listenDuration));
 
         var clockEvents = allMessages[0]
             .Where(m => m.MessageType == MessageType.Event && m.Address == clockDeviceReg)
             .Take(options.ClockSamples).ToList();
         var testedEvents = allMessages[1]
-            .Where(m => m.MessageType == MessageType.Event && m.Address == options.PpsAddress!.Value)
+            .Where(m => m.MessageType == MessageType.Event && m.Address == options.PpsEvent!.Value)
             .Take(options.ClockSamples).ToList();
 
         int pairCount = Math.Min(clockEvents.Count, testedEvents.Count);
         if (pairCount == 0)
             return new AssertionResult(false,
                 $"No event pairs received within {listenDuration.TotalSeconds}s " +
-                $"(clock register 0x{clockDeviceReg:X2}, tested register 0x{options.PpsAddress!.Value:X2}).");
+                $"(clock register {clockDeviceReg}, tested register {options.PpsEvent!.Value}).");
 
         var deltas = clockEvents
             .Zip(testedEvents, (c, t) => c.GetTimestamp() - t.GetTimestamp())

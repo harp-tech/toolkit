@@ -4,7 +4,7 @@ namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_TIMESTAMP_OFFSET : Suite
 {
-    private const byte address = 0x0F;
+    private const byte Address = 15;
     public override string Description => "Timestamp Offset Register Tests";
 
     [HarpTest(Description = "Validates the deprecated register TimestampOffset returns 0x00.")]
@@ -12,12 +12,12 @@ internal class R_TIMESTAMP_OFFSET : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var value = await device.ReadByteAsync(address);
+            var value = await device.ReadByteAsync(Address);
             return new AssertionResult(
                 value == 0x00,
                 x => x ?
-                    $"TimestampOffset register correctly returned 0x00." :
-                    $"TimestampOffset register returned a non-zero value (0x{value:X2})");
+                    "TimestampOffset register correctly returned 0x00." :
+                    $"TimestampOffset register returned a non-zero value (0x{value:X2}).");
         }
     }
 
@@ -26,7 +26,7 @@ internal class R_TIMESTAMP_OFFSET : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var req = HarpMessage.FromByte(address, MessageType.Write, 0x00);
+            var req = HarpMessage.FromByte(Address, MessageType.Write, 0x00);
             var rejected = await RegisterHelpers.IsWriteRejectedAsync(device, req);
             return new AssertionResult(
                 rejected,

@@ -24,7 +24,7 @@ internal class R_WHO_AM_I : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var req = HarpMessage.FromUInt16(0x00, MessageType.Write, 0);
+            var req = HarpMessage.FromUInt16(WhoAmI.Address, MessageType.Write, 0);
             var rejected = await RegisterHelpers.IsWriteRejectedAsync(device, req);
             return new AssertionResult(
                 rejected,

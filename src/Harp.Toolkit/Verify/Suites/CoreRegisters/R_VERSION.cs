@@ -4,8 +4,6 @@ namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_VERSION : Suite
 {
-    private const byte address = 0x13;
-    private const int expectedLength = 32;
     public override string Description => "Version Register Tests";
 
     [HarpTest(Description = "Validates that Version register is readable.")]
@@ -15,7 +13,7 @@ internal class R_VERSION : Suite
         {
             try
             {
-                await device.ReadByteArrayAsync(address);
+                await device.ReadByteArrayAsync(Version.Address);
                 return new AssertionResult(true, "Version is readable.");
             }
             catch (Exception ex)
@@ -30,7 +28,7 @@ internal class R_VERSION : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            return await RegisterHelpers.AssertReadableArrayAsync(device, address, expectedLength, "Version");
+            return await RegisterHelpers.AssertReadableArrayAsync(device, Version.Address, Version.RegisterLength, "Version");
         }
     }
 
@@ -39,13 +37,44 @@ internal class R_VERSION : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var req = HarpMessage.FromByte(address, MessageType.Write, 0x00);
+            var req = HarpMessage.FromByte(Version.Address, MessageType.Write, 0x00);
             var rejected = await RegisterHelpers.IsWriteRejectedAsync(device, req);
             return new AssertionResult(
                 rejected,
                 x => x
                     ? "Version register correctly rejected write."
                     : "Version register should NOT be writable.");
+        }
+    }
+
+    [HarpTest(Description = "Reports the version information declared by the device.")]
+    public async Task<IResult> ReportVersionInformation(string portName)
+    {
+        using (var device = new AsyncDevice(portName))
+        {
+            try
+            {
+                var reply = await device.CommandAsync(HarpCommand.ReadByte(Version.Address));
+                var payload = reply.GetPayloadArray<byte>();
+                if (payload.Length != Version.RegisterLength)
+                {
+                    return new AssertionResult(
+                        false,
+                        $"Version returned {payload.Length} bytes, expected {Version.RegisterLength}.");
+                }
+
+                var version = Version.GetPayload(reply);
+                return new Result<VersionPayload>(
+                    version,
+                    Status.Passed,
+                    $"PROTOCOL {version.ProtocolVersion}, FIRMWARE {version.FirmwareVersion}, " +
+                    $"HARDWARE {version.HardwareVersion}, CORE_ID {version.CoreId}, " +
+                    $"INTERFACE_HASH {Convert.ToHexString(version.InterfaceHash)}.");
+            }
+            catch (Exception ex)
+            {
+                return new ErrorResult(ex);
+            }
         }
     }
 }

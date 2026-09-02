@@ -4,7 +4,6 @@ namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_TIMESTAMP_MICRO : Suite
 {
-    private const byte address = 0x09;
     public override string Description => "Timestamp Microseconds Register Tests";
 
     [HarpTest(Description = "Validates that TimestampMicro register is readable.")]
@@ -14,7 +13,7 @@ internal class R_TIMESTAMP_MICRO : Suite
         {
             try
             {
-                await device.ReadUInt16Async(address);
+                await device.ReadUInt16Async(TimestampMicroseconds.Address);
                 return new AssertionResult(true, "TimestampMicro is readable.");
             }
             catch (Exception ex)
@@ -29,7 +28,7 @@ internal class R_TIMESTAMP_MICRO : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var req = HarpMessage.FromUInt16(address, MessageType.Write, 0);
+            var req = HarpMessage.FromUInt16(TimestampMicroseconds.Address, MessageType.Write, 0);
             var rejected = await RegisterHelpers.IsWriteRejectedAsync(device, req);
             return new AssertionResult(
                 rejected,
@@ -44,7 +43,7 @@ internal class R_TIMESTAMP_MICRO : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var microValue = await device.ReadUInt16Async(address);
+            var microValue = await device.ReadUInt16Async(TimestampMicroseconds.Address);
             return new AssertionResult(
                 microValue < 31250,
                 x => x

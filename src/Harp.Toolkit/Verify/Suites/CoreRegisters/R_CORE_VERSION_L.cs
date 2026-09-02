@@ -4,7 +4,6 @@ namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_CORE_VERSION_L : Suite
 {
-    private const byte address = 0x05;
     public override string Description => "Core Version Low Register Tests";
 
     [HarpTest(Description = "Validates that CoreVersionLow matches byte 1 of R_VERSION.")]
@@ -12,8 +11,8 @@ internal class R_CORE_VERSION_L : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var versionArray = await device.ReadByteArrayAsync(0x13);
-            var registerValue = await device.ReadByteAsync(address);
+            var versionArray = await device.ReadByteArrayAsync(Version.Address);
+            var registerValue = await device.ReadByteAsync(CoreVersionLow.Address);
             return new AssertionResult(
                 registerValue == versionArray[1],
                 x => x

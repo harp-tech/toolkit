@@ -4,8 +4,6 @@ namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_DEVICE_NAME : Suite
 {
-    private const byte address = 0x0C;
-    private const int expectedLength = 25;
     public override string Description => "Device Name Register Tests";
 
     [HarpTest(Description = "Validates that DeviceName register is readable.")]
@@ -15,7 +13,7 @@ internal class R_DEVICE_NAME : Suite
         {
             try
             {
-                await device.ReadByteArrayAsync(address);
+                await device.ReadByteArrayAsync(DeviceName.Address);
                 return new AssertionResult(true, "DeviceName is readable.");
             }
             catch (Exception ex)
@@ -30,7 +28,7 @@ internal class R_DEVICE_NAME : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            return await RegisterHelpers.AssertReadableArrayAsync(device, address, expectedLength, "DeviceName");
+            return await RegisterHelpers.AssertReadableArrayAsync(device, DeviceName.Address, DeviceName.RegisterLength, "DeviceName");
         }
     }
 }

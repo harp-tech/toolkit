@@ -19,7 +19,7 @@ internal class R_TIMESTAMP_SECOND : Suite
             double readSeconds = response.GetTimestamp();
             return new AssertionResult(
                 readSeconds - setSeconds < 1.0,
-                (success) => success ? $"`TimestampSeconds` register is writable and updates as expected." : $"`TimestampSeconds` register is not writable, Expected value: {setSeconds}, read value: {readSeconds}.");
+                (success) => success ? "TimestampSeconds register is writable and updates as expected." : $"TimestampSeconds register is not writable. Expected value: {setSeconds}, read value: {readSeconds}.");
         }
     }
 
