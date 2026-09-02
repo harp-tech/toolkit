@@ -100,11 +100,13 @@ public class VerifyCommand : Command
         {
             // Print "Running" status before test execution (without newline)
             currentTest++;
-            Console.Write($"({currentTest}/{runner.TestCount}) {suite.GetType().Name}::{testName} .... Running...");
+            if (!Console.IsOutputRedirected)
+                Console.Write($"({currentTest}/{runner.TestCount}) {suite.GetType().Name}::{testName} .... Running...");
         }))
         {
             // Clear the line by moving cursor to start and overwriting with spaces, then print result
-            Console.Write($"\r{new string(' ', Console.WindowWidth - 1)}\r");
+            if (!Console.IsOutputRedirected)
+                Console.Write($"\r{new string(' ', Console.WindowWidth - 1)}\r");
             AnsiConsole.MarkupLine($"[grey]({currentTest}/{runner.TestCount}) {suite.GetType().Name}::{result.Name}[/] .... {GetResultMarkup(result.Result)}");
 
             var suiteResult = report.Suites.FirstOrDefault(s => s.Name == suite.GetType().Name);
