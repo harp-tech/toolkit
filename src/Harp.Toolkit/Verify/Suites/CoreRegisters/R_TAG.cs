@@ -39,7 +39,7 @@ internal class R_TAG : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var req = HarpMessage.FromByte(Address, MessageType.Write, 0x00);
+            var req = HarpMessage.FromByte(Address, MessageType.Write, new byte[ExpectedLength]);
             var rejected = await RegisterHelpers.IsWriteRejectedAsync(device, req);
             return new AssertionResult(
                 rejected,

@@ -32,16 +32,21 @@ public class VerifyCommand : Command
 
         Option<int?> ppsEventOption = new("--pps-event")
         {
-            Description = "Address of the register on the tested device (--port) that reports the incoming PPS pulse from the reference clock device. Enables the PPS alignment test.",
+            Description = "Address of the register on the tested device (--port) that reports the incoming PPS pulse from the reference clock device. Enables the PPS alignment test, which also requires --clock-port.",
             Required = false,
         };
 
         Option<int> clockSamplesOption = new("--clock-samples")
         {
-            Description = "Number of PPS event pairs to collect for the PPS alignment test. Default: 5.",
+            Description = "Number of PPS event pairs to collect for the PPS alignment test.",
             Required = false,
         };
         clockSamplesOption.DefaultValueFactory = _ => 5;
+        clockSamplesOption.Validators.Add(result =>
+        {
+            if (result.GetValueOrDefault<int>() < 1)
+                result.AddError("The number of clock samples must be greater than zero.");
+        });
 
         Option<FileInfo> deviceYmlOption = new("--device-yml")
         {
@@ -176,7 +181,7 @@ public class VerifyCommand : Command
         {
             AnsiConsole.Markup("Generating HTML report...");
             string html = await HtmlReportGenerator.GenerateAsync(report);
-            string fileName = reportFile?.FullName ?? $"TestReport_{DateTime.Now:yyyyMMdd_HHmmss}.html";
+            string fileName = reportFile.FullName;
             await File.WriteAllTextAsync(fileName, html, cancellationToken);
             AnsiConsole.MarkupLine($"[green]Done![/] Report generated: [link]{fileName}[/]");
         }

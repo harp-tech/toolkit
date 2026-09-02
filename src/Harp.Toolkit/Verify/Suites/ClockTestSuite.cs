@@ -32,7 +32,7 @@ internal class ClockTestSuite : Suite
         {
             var results = await Task.WhenAll(testedDevice.CommandAsync(probe), clockDevice.CommandAsync(probe));
             deltas[i] = results[0].GetTimestamp() - results[1].GetTimestamp();
-            await Task.Delay(new Random().Next(20, 70));
+            await Task.Delay(Random.Shared.Next(20, 70));
         }
 
         var summary = new BenchmarkSummary(deltas);

@@ -18,7 +18,7 @@ internal class R_TIMESTAMP_SECOND : Suite
             HarpMessage response = await device.CommandAsync(TimestampSeconds.FromPayload(MessageType.Read, default));
             double readSeconds = response.GetTimestamp();
             return new AssertionResult(
-                readSeconds - setSeconds < 1.0,
+                Math.Abs(readSeconds - setSeconds) < 1.0,
                 (success) => success ? "TimestampSeconds register is writable and updates as expected." : $"TimestampSeconds register is not writable. Expected value: {setSeconds}, read value: {readSeconds}.");
         }
     }

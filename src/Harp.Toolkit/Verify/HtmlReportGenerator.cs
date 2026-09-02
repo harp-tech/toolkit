@@ -12,7 +12,7 @@ public static class HtmlReportGenerator
             .UseMemoryCachingProvider()
             .Build();
 
-        // The template is copied to the output directory under Reporting/ReportTemplate.cshtml
+        // The template is copied to the output directory under Verify/ReportTemplate.cshtml
         // RazorLight expects the path relative to the project root (which we set to the assembly location)
         string templatePath = Path.Combine("Verify", "ReportTemplate.cshtml");
 

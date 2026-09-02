@@ -4,7 +4,7 @@ namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_HEARTBEAT : Suite
 {
-    private const byte Address = 18;
+    internal const byte Address = 18;
     public override string Description => "Heartbeat Register Tests";
 
     [HarpTest(Description = "Validates that Heartbeat register is readable.")]
@@ -21,7 +21,7 @@ internal class R_HEARTBEAT : Suite
     {
         using (var device = new AsyncDevice(portName))
         {
-            var req = HarpMessage.FromByte(Address, MessageType.Write, 0x00);
+            var req = HarpMessage.FromUInt16(Address, MessageType.Write, 0);
             var rejected = await RegisterHelpers.IsWriteRejectedAsync(device, req);
             return new AssertionResult(
                 rejected,
