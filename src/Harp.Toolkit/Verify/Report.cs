@@ -1,4 +1,4 @@
-﻿namespace Harp.Toolkit;
+﻿namespace Harp.Toolkit.Verify;
 
 public class Report
 {

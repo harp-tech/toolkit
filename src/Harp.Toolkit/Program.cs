@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using Bonsai.Harp;
 using Harp.Toolkit.Generate;
+using Harp.Toolkit.Verify;
 
 namespace Harp.Toolkit;
 

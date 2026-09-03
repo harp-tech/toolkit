@@ -1,6 +1,5 @@
 ﻿
 using Bonsai.Harp;
-using Harp.Toolkit.Verify;
 
 namespace Harp.Toolkit.Verify.Suites;
 
@@ -16,7 +15,7 @@ internal class ClockTestSuite : Suite
     public override string Description => "Tests clock alignment and PPS synchronization accuracy against a reference clock device.";
 
     [HarpTest(Description = "Sends 100 simultaneous WhoAmI reads to both devices and compares embedded timestamps to measure clock offset.")]
-    public async Task<IResult> SimultaneousWhoAmI(string portName)
+    public async Task<IResult> SimultaneousWhoAmI(VerifyConnection device)
     {
         if (options is null)
             return new Result<bool>(false, Status.Skipped, "No clock port provided (--clock-port).");
@@ -25,12 +24,11 @@ internal class ClockTestSuite : Suite
         double[] deltas = new double[n];
         var probe = WhoAmI.FromPayload(MessageType.Read, default);
 
-        using var testedDevice = new AsyncDevice(portName);
-        using var clockDevice = new AsyncDevice(options.ClockPort);
+        using var clockDevice = await VerifyConnection.OpenAsync(options.ClockPort);
 
         for (int i = 0; i < n; i++)
         {
-            var results = await Task.WhenAll(testedDevice.CommandAsync(probe), clockDevice.CommandAsync(probe));
+            var results = await Task.WhenAll(device.CommandAsync(probe), clockDevice.CommandAsync(probe));
             deltas[i] = results[0].GetTimestamp() - results[1].GetTimestamp();
             await Task.Delay(Random.Shared.Next(20, 70));
         }
@@ -44,7 +42,7 @@ internal class ClockTestSuite : Suite
     }
 
     [HarpTest(Description = "Subscribes to PPS events on both devices and compares timestamps to measure hardware clock synchronization accuracy.")]
-    public async Task<IResult> PpsEventAlignment(string portName)
+    public async Task<IResult> PpsEventAlignment(VerifyConnection device)
     {
         if (options is null)
             return new Result<bool>(false, Status.Skipped, "No clock port provided (--clock-port).");
@@ -58,13 +56,13 @@ internal class ClockTestSuite : Suite
         const byte clockDeviceOpCtrl = 0x81;
 
         var listenDuration = TimeSpan.FromSeconds(options.ClockSamples + 5);
+        using var clockDevice = await VerifyConnection.OpenAsync(options.ClockPort);
+
         var allMessages = await Task.WhenAll(
-            RegisterHelpers.WriteToTransportAsync(
-                options.ClockPort,
+            clockDevice.WriteAndCollectAsync(
                 [HarpMessage.FromByte(OperationControl.Address, MessageType.Write, clockDeviceOpCtrl)],
                 listenDuration),
-            RegisterHelpers.WriteToTransportAsync(
-                portName,
+            device.WriteAndCollectAsync(
                 [HarpMessage.FromByte(OperationControl.Address, MessageType.Write, 0x01)],
                 listenDuration));
 

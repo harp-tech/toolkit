@@ -8,31 +8,25 @@ internal class R_TIMESTAMP_OFFSET : Suite
     public override string Description => "Timestamp Offset Register Tests";
 
     [HarpTest(Description = "Validates the deprecated register TimestampOffset returns 0x00.")]
-    public async Task<IResult> AssertReturnsZero(string portName)
+    public async Task<IResult> AssertReturnsZero(VerifyConnection device)
     {
-        using (var device = new AsyncDevice(portName))
-        {
-            var value = await device.ReadByteAsync(Address);
-            return new AssertionResult(
-                value == 0x00,
-                x => x ?
-                    "TimestampOffset register correctly returned 0x00." :
-                    $"TimestampOffset register returned a non-zero value (0x{value:X2}).");
-        }
+        var value = await device.ReadByteAsync(Address);
+        return new AssertionResult(
+            value == 0x00,
+            x => x ?
+                "TimestampOffset register correctly returned 0x00." :
+                $"TimestampOffset register returned a non-zero value (0x{value:X2}).");
     }
 
     [HarpTest(Description = "Validates the deprecated register TimestampOffset is NOT writable.")]
-    public async Task<IResult> IsNotWritable(string portName)
+    public async Task<IResult> IsNotWritable(VerifyConnection device)
     {
-        using (var device = new AsyncDevice(portName))
-        {
-            var req = HarpMessage.FromByte(Address, MessageType.Write, 0x00);
-            var rejected = await RegisterHelpers.IsWriteRejectedAsync(device, req);
-            return new AssertionResult(
-                rejected,
-                x => x ?
-                    "Device correctly reported an error when trying to write to TimestampOffset register." :
-                    "Timestamp Offset register is deprecated and MUST NOT allow writes.");
-        }
+        var req = HarpMessage.FromByte(Address, MessageType.Write, 0x00);
+        var rejected = await RegisterHelpers.IsWriteRejectedAsync(device, req);
+        return new AssertionResult(
+            rejected,
+            x => x ?
+                "Device correctly reported an error when trying to write to TimestampOffset register." :
+                "Timestamp Offset register is deprecated and MUST NOT allow writes.");
     }
 }

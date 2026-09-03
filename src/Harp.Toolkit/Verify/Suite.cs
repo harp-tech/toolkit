@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using Bonsai.Harp;
 
-namespace Harp.Toolkit;
+namespace Harp.Toolkit.Verify;
 
 
 public abstract class Suite
@@ -26,7 +26,7 @@ public abstract class Suite
             .Where(x => x.Attribute != null);
     }
 
-    public async IAsyncEnumerable<MethodResult> RunAllAsync(string portName, [EnumeratorCancellation] CancellationToken cancellationToken = default, Action<string, string>? onTestStart = null)
+    public async IAsyncEnumerable<MethodResult> RunAllAsync(VerifyConnection connection, [EnumeratorCancellation] CancellationToken cancellationToken = default, Action<string, string>? onTestStart = null)
     {
         foreach (var (method, attr) in CollectTests())
         {
@@ -38,7 +38,7 @@ public abstract class Suite
             IResult testResult;
             try
             {
-                object? resultObj = method.Invoke(this, new object[] { portName });
+                object? resultObj = method.Invoke(this, new object[] { connection });
                 if (resultObj is Task<IResult> task)
                 {
                     testResult = await task;
@@ -73,7 +73,7 @@ public abstract class Suite
             IResult testResult;
             try
             {
-                testResult = await test.Run(portName, cancellationToken);
+                testResult = await test.Run(connection, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -93,7 +93,7 @@ public abstract class Suite
 /// A test whose name and behavior is determined at runtime rather than declared
 /// with <see cref="HarpTestAttribute"/> on a fixed method.
 /// </summary>
-public record DynamicTest(string Name, string Description, Func<string, CancellationToken, Task<IResult>> Run);
+public record DynamicTest(string Name, string Description, Func<VerifyConnection, CancellationToken, Task<IResult>> Run);
 
 public class SuiteResult
 {

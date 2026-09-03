@@ -1,5 +1,5 @@
 ﻿
-namespace Harp.Toolkit;
+namespace Harp.Toolkit.Verify;
 
 
 public enum Status

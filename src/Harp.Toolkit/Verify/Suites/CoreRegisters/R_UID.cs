@@ -1,6 +1,4 @@
-﻿
-using Bonsai.Harp;
-namespace Harp.Toolkit.Verify.Suites;
+﻿namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_UID : Suite
 {
@@ -9,30 +7,24 @@ internal class R_UID : Suite
     public override string Description => "UID Register Tests";
 
     [HarpTest(Description = "Validates that UID register has exactly 16 bytes.")]
-    public async Task<IResult> AssertLength(string portName)
+    public async Task<IResult> AssertLength(VerifyConnection device)
     {
-        using (var device = new AsyncDevice(portName))
-        {
-            var value = await device.ReadByteArrayAsync(Address);
-            return new AssertionResult(
-                value.Length == ExpectedLength,
-                x => x ?
-                    $"Length is {ExpectedLength} as expected." :
-                    $"Expected length of register to be {ExpectedLength}, got {value.Length} instead.");
-        }
+        var value = await device.ReadByteArrayAsync(Address);
+        return new AssertionResult(
+            value.Length == ExpectedLength,
+            x => x ?
+                $"Length is {ExpectedLength} as expected." :
+                $"Expected length of register to be {ExpectedLength}, got {value.Length} instead.");
     }
 
     [HarpTest(Description = "Checks if the register value is 0, indicating it is likely not used.")]
-    public async Task<IResult> AssertReturnsZero(string portName)
+    public async Task<IResult> AssertReturnsZero(VerifyConnection device)
     {
-        using (var device = new AsyncDevice(portName))
-        {
-            var value = await device.ReadByteArrayAsync(Address);
-            string msg = value.All(x => x == 0) ? "Value of all bytes is 0. Register likely not being used." : $"Register returned a non-zero value: {BitConverter.ToString(value)}.";
-            return new Result<byte[]>(
-                value,
-                Status.Passed,
-                msg);
-        }
+        var value = await device.ReadByteArrayAsync(Address);
+        string msg = value.All(x => x == 0) ? "Value of all bytes is 0. Register likely not being used." : $"Register returned a non-zero value: {BitConverter.ToString(value)}.";
+        return new Result<byte[]>(
+            value,
+            Status.Passed,
+            msg);
     }
 }

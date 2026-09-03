@@ -4,7 +4,6 @@ using Harp.Generators;
 using Harp.Toolkit.Generate;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Emit;
 using Microsoft.Extensions.DependencyModel;
 
 namespace Harp.Toolkit.Verify;

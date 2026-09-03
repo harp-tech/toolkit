@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace Harp.Toolkit;
+namespace Harp.Toolkit.Verify;
 
 public class Runner
 {
@@ -17,11 +17,11 @@ public class Runner
         return suites.AsReadOnly();
     }
 
-    public async IAsyncEnumerable<(Suite Suite, MethodResult Result)> RunAllAsync(string portName, [EnumeratorCancellation] CancellationToken cancellationToken = default, Action<Suite, string, string>? onTestStart = null)
+    public async IAsyncEnumerable<(Suite Suite, MethodResult Result)> RunAllAsync(VerifyConnection connection, [EnumeratorCancellation] CancellationToken cancellationToken = default, Action<Suite, string, string>? onTestStart = null)
     {
         foreach (var suite in suites)
         {
-            await foreach (var result in suite.RunAllAsync(portName, cancellationToken, (testName, testDesc) => onTestStart?.Invoke(suite, testName, testDesc)))
+            await foreach (var result in suite.RunAllAsync(connection, cancellationToken, (testName, testDesc) => onTestStart?.Invoke(suite, testName, testDesc)))
             {
                 yield return (suite, result);
             }

@@ -1,84 +1,64 @@
-﻿﻿using Bonsai.Harp;
+﻿using Bonsai.Harp;
 
 namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_OPERATION_CTRL : Suite
 {
-    private const int PortReleaseDelayMilliseconds = 200;
-
     public override string Description => "Operation Control Register Tests";
 
     [HarpTest(Description = "Validates that OP_MODE bits can be round-tripped between Standby (0) and Active (1).")]
-    public async Task<IResult> OpModeRoundTrip(string portName)
+    public async Task<IResult> OpModeRoundTrip(VerifyConnection device)
     {
-        using (var device = new AsyncDevice(portName))
+        var original = await device.ReadByteAsync(OperationControl.Address);
+        byte currentMode = (byte)(original & 0x03);
+        byte newMode = currentMode == 0x01 ? (byte)0x00 : (byte)0x01;
+        byte newValue = (byte)((original & ~0x03) | newMode);
+
+        try
         {
-            var original = await device.ReadByteAsync(OperationControl.Address);
-            byte currentMode = (byte)(original & 0x03);
-            byte newMode = currentMode == 0x01 ? (byte)0x00 : (byte)0x01;
-            byte newValue = (byte)((original & ~0x03) | newMode);
+            await device.CommandAsync(HarpMessage.FromByte(OperationControl.Address, MessageType.Write, newValue));
+            var readBack = await device.ReadByteAsync(OperationControl.Address);
+            byte readMode = (byte)(readBack & 0x03);
 
-            try
-            {
-                await device.CommandAsync(HarpMessage.FromByte(OperationControl.Address, MessageType.Write, newValue));
-                var readBack = await device.ReadByteAsync(OperationControl.Address);
-                byte readMode = (byte)(readBack & 0x03);
-
-                return new AssertionResult(
-                    readMode == newMode,
-                    x => x
-                        ? $"OpModeRoundTrip: OP_MODE correctly round-tripped to {newMode}."
-                        : $"OpModeRoundTrip: wrote OP_MODE={newMode}, read back OP_MODE={readMode}.");
-            }
-            finally
-            {
-                await RestoreOperationControlAsync(device, original);
-            }
+            return new AssertionResult(
+                readMode == newMode,
+                x => x
+                    ? $"OpModeRoundTrip: OP_MODE correctly round-tripped to {newMode}."
+                    : $"OpModeRoundTrip: wrote OP_MODE={newMode}, read back OP_MODE={readMode}.");
+        }
+        finally
+        {
+            await RestoreOperationControlAsync(device, original);
         }
     }
 
     [HarpTest(Description = "Validates that ALIVE_EN (deprecated, bit 7) can be toggled, or reports as unsupported.")]
-    public async Task<IResult> AliveEnWritable(string portName)
+    public async Task<IResult> AliveEnWritable(VerifyConnection device)
     {
-        using (var device = new AsyncDevice(portName))
-        {
-            return await TestOptionalBitAsync(device, "AliveEn", 0x80);
-        }
+        return await TestOptionalBitAsync(device, "AliveEn", 0x80);
     }
 
     [HarpTest(Description = "Validates that OPLED_EN (optional, bit 6) can be toggled, or reports as unsupported.")]
-    public async Task<IResult> OpLedEnWritable(string portName)
+    public async Task<IResult> OpLedEnWritable(VerifyConnection device)
     {
-        using (var device = new AsyncDevice(portName))
-        {
-            return await TestOptionalBitAsync(device, "OpLedEn", 0x40);
-        }
+        return await TestOptionalBitAsync(device, "OpLedEn", 0x40);
     }
 
     [HarpTest(Description = "Validates that VISUAL_EN (optional, bit 5) can be toggled, or reports as unsupported.")]
-    public async Task<IResult> VisualEnWritable(string portName)
+    public async Task<IResult> VisualEnWritable(VerifyConnection device)
     {
-        using (var device = new AsyncDevice(portName))
-        {
-            return await TestOptionalBitAsync(device, "VisualEn", 0x20);
-        }
+        return await TestOptionalBitAsync(device, "VisualEn", 0x20);
     }
 
     [HarpTest(Description = "Validates that enabling HEARTBEAT_EN causes the device to emit R_HEARTBEAT events.")]
-    public async Task<IResult> HeartbeatEnEmitsEvents(string portName)
+    public async Task<IResult> HeartbeatEnEmitsEvents(VerifyConnection device)
     {
         byte originalOpCtrl = 0;
 
         try
         {
-            using (var device = new AsyncDevice(portName))
-            {
-                originalOpCtrl = await device.ReadByteAsync(OperationControl.Address);
-            }
-            await Task.Delay(500); // The previous one needs some time to disconnect
-
-            var messages = await RegisterHelpers.WriteToTransportAsync(
-                portName,
+            originalOpCtrl = await device.ReadByteAsync(OperationControl.Address);
+            var messages = await device.WriteAndCollectAsync(
                 new[] { HarpMessage.FromByte(OperationControl.Address, MessageType.Write, 0x05) },
                 TimeSpan.FromSeconds(2.0));
 
@@ -96,26 +76,20 @@ internal class R_OPERATION_CTRL : Suite
         }
         finally
         {
-            await RestoreOperationControlAsync(portName, originalOpCtrl);
+            await RestoreOperationControlAsync(device, originalOpCtrl);
         }
     }
 
     [HarpTest(Description = "Validates that HEARTBEAT_EN (bit 2) takes precedence over ALIVE_EN (bit 7): when both are set, R_HEARTBEAT events are emitted and R_TIMESTAMP_SECOND events are not.")]
-    public async Task<IResult> HeartbeatEnPrecedenceOverAliveEn(string portName)
+    public async Task<IResult> HeartbeatEnPrecedenceOverAliveEn(VerifyConnection device)
     {
         byte originalOpCtrl = 0;
 
         try
         {
-            using (var device = new AsyncDevice(portName))
-            {
-                originalOpCtrl = await device.ReadByteAsync(OperationControl.Address);
-            }
-            await Task.Delay(500);
-
+            originalOpCtrl = await device.ReadByteAsync(OperationControl.Address);
             // Set both ALIVE_EN (bit 7) and HEARTBEAT_EN (bit 2) with Active mode (bit 0)
-            var messages = await RegisterHelpers.WriteToTransportAsync(
-                portName,
+            var messages = await device.WriteAndCollectAsync(
                 new[] { HarpMessage.FromByte(OperationControl.Address, MessageType.Write, 0x85) },
                 TimeSpan.FromSeconds(2.0));
 
@@ -135,26 +109,20 @@ internal class R_OPERATION_CTRL : Suite
         }
         finally
         {
-            await RestoreOperationControlAsync(portName, originalOpCtrl);
+            await RestoreOperationControlAsync(device, originalOpCtrl);
         }
     }
 
     [HarpTest(Description = "Validates that ALIVE_EN (deprecated, bit 7) causes R_TIMESTAMP_SECOND events to be emitted when HEARTBEAT_EN is not set.")]
-    public async Task<IResult> AliveEnEmitsTimestampEvents(string portName)
+    public async Task<IResult> AliveEnEmitsTimestampEvents(VerifyConnection device)
     {
         byte originalOpCtrl = 0;
 
         try
         {
-            using (var device = new AsyncDevice(portName))
-            {
-                originalOpCtrl = await device.ReadByteAsync(OperationControl.Address);
-            }
-            await Task.Delay(500);
-
+            originalOpCtrl = await device.ReadByteAsync(OperationControl.Address);
             // Set only ALIVE_EN (bit 7) with Active mode (bit 0); HEARTBEAT_EN (bit 2) is cleared
-            var messages = await RegisterHelpers.WriteToTransportAsync(
-                portName,
+            var messages = await device.WriteAndCollectAsync(
                 new[] { HarpMessage.FromByte(OperationControl.Address, MessageType.Write, 0x81) },
                 TimeSpan.FromSeconds(2.0));
 
@@ -171,26 +139,20 @@ internal class R_OPERATION_CTRL : Suite
         }
         finally
         {
-            await RestoreOperationControlAsync(portName, originalOpCtrl);
+            await RestoreOperationControlAsync(device, originalOpCtrl);
         }
     }
 
     [HarpTest(Description = "Validates that the DUMP bit triggers a burst of all core register reads after an OpCtrl write.")]
-    public async Task<IResult> RegisterDump(string portName)
+    public async Task<IResult> RegisterDump(VerifyConnection device)
     {
         byte originalOpCtrl = 0;
 
         try
         {
             // Read original state before modifying
-            using (var device = new AsyncDevice(portName))
-            {
-                originalOpCtrl = await device.ReadByteAsync(OperationControl.Address);
-            }
-            await Task.Delay(500); // The previous one needs some time to disconnect
-
-            var messages = await RegisterHelpers.WriteToTransportAsync(
-                portName,
+            originalOpCtrl = await device.ReadByteAsync(OperationControl.Address);
+            var messages = await device.WriteAndCollectAsync(
                 new[] { HarpMessage.FromByte(OperationControl.Address, MessageType.Write, (byte)(originalOpCtrl | 0x08)) },
                 TimeSpan.FromSeconds(1));
 
@@ -217,11 +179,11 @@ internal class R_OPERATION_CTRL : Suite
         }
         finally
         {
-            await RestoreOperationControlAsync(portName, originalOpCtrl);
+            await RestoreOperationControlAsync(device, originalOpCtrl);
         }
     }
 
-    private static async Task RestoreOperationControlAsync(AsyncDevice device, byte value)
+    private static async Task RestoreOperationControlAsync(VerifyConnection device, byte value)
     {
         try
         {
@@ -232,20 +194,7 @@ internal class R_OPERATION_CTRL : Suite
         }
     }
 
-    private static async Task RestoreOperationControlAsync(string portName, byte value)
-    {
-        await Task.Delay(PortReleaseDelayMilliseconds);
-        try
-        {
-            using var device = new AsyncDevice(portName);
-            await RestoreOperationControlAsync(device, value);
-        }
-        catch
-        {
-        }
-    }
-
-    private static async Task<IResult> TestOptionalBitAsync(AsyncDevice device, string bitName, byte bitMask)
+    private static async Task<IResult> TestOptionalBitAsync(VerifyConnection device, string bitName, byte bitMask)
     {
         var original = await device.ReadByteAsync(OperationControl.Address);
         byte toggled = (byte)(original ^ bitMask);

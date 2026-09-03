@@ -1,11 +1,10 @@
 ﻿using System.CommandLine;
 using Spectre.Console;
 using Harp.Generators;
-using Harp.Toolkit.Verify;
 using Harp.Toolkit.Verify.Suites;
 using Harp.Toolkit.Generate;
 
-namespace Harp.Toolkit;
+namespace Harp.Toolkit.Verify;
 public class VerifyCommand : Command
 {
     public VerifyCommand()
@@ -100,8 +99,10 @@ public class VerifyCommand : Command
             RunDate = DateTime.Now
         };
 
+        using var connection = await VerifyConnection.OpenAsync(portName, cancellationToken);
+
         int currentTest = 0;
-        await foreach (var (suite, result) in runner.RunAllAsync(portName, cancellationToken, (suite, testName, testDesc) =>
+        await foreach (var (suite, result) in runner.RunAllAsync(connection, cancellationToken, (suite, testName, testDesc) =>
         {
             // Print "Running" status before test execution (without newline)
             currentTest++;

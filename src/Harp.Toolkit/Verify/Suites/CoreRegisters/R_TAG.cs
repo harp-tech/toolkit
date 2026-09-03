@@ -9,43 +9,34 @@ internal class R_TAG : Suite
     public override string Description => "Tag Register Tests";
 
     [HarpTest(Description = "Validates that Tag register is readable.")]
-    public async Task<IResult> IsReadable(string portName)
+    public async Task<IResult> IsReadable(VerifyConnection device)
     {
-        using (var device = new AsyncDevice(portName))
+        try
         {
-            try
-            {
-                await device.ReadByteArrayAsync(Address);
-                return new AssertionResult(true, "Tag is readable.");
-            }
-            catch (Exception ex)
-            {
-                return new ErrorResult(ex);
-            }
+            await device.ReadByteArrayAsync(Address);
+            return new AssertionResult(true, "Tag is readable.");
+        }
+        catch (Exception ex)
+        {
+            return new ErrorResult(ex);
         }
     }
 
     [HarpTest(Description = "Validates that Tag register has exactly 8 bytes.")]
-    public async Task<IResult> AssertLength(string portName)
+    public async Task<IResult> AssertLength(VerifyConnection device)
     {
-        using (var device = new AsyncDevice(portName))
-        {
-            return await RegisterHelpers.AssertReadableArrayAsync(device, Address, ExpectedLength, "Tag");
-        }
+        return await RegisterHelpers.AssertReadableArrayAsync(device, Address, ExpectedLength, "Tag");
     }
 
     [HarpTest(Description = "Validates that Tag register is NOT writable.")]
-    public async Task<IResult> IsNotWritable(string portName)
+    public async Task<IResult> IsNotWritable(VerifyConnection device)
     {
-        using (var device = new AsyncDevice(portName))
-        {
-            var req = HarpMessage.FromByte(Address, MessageType.Write, new byte[ExpectedLength]);
-            var rejected = await RegisterHelpers.IsWriteRejectedAsync(device, req);
-            return new AssertionResult(
-                rejected,
-                x => x
-                    ? "Tag register correctly rejected write."
-                    : "Tag register should NOT be writable.");
-        }
+        var req = HarpMessage.FromByte(Address, MessageType.Write, new byte[ExpectedLength]);
+        var rejected = await RegisterHelpers.IsWriteRejectedAsync(device, req);
+        return new AssertionResult(
+            rejected,
+            x => x
+                ? "Tag register correctly rejected write."
+                : "Tag register should NOT be writable.");
     }
 }

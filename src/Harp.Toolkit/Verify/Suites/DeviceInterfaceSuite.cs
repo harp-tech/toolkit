@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using Bonsai.Harp;
 using Harp.Generators;
-using Harp.Toolkit.Verify;
 
 namespace Harp.Toolkit.Verify.Suites;
 
@@ -62,7 +61,7 @@ internal class DeviceInterfaceSuite : Suite
         "Validates the C# interface generated from device.yml by parsing live register replies with its own generated parsers, and cross-checks WhoAmI/firmware/hardware versions.";
 
     [HarpTest(Description = "Generates and compiles the C# interface from device.yml.")]
-    public Task<IResult> GenerateAndCompileInterface(string portName)
+    public Task<IResult> GenerateAndCompileInterface(VerifyConnection device)
     {
         IResult result = metadata is null
             ? new Result<bool>(false, Status.Skipped, "No device.yml provided (--device-yml).")
@@ -73,12 +72,11 @@ internal class DeviceInterfaceSuite : Suite
     }
 
     [HarpTest(Description = "Compares the WhoAmI/firmware/hardware version reported by the device against device.yml.")]
-    public async Task<IResult> DeviceIdentity(string portName)
+    public async Task<IResult> DeviceIdentity(VerifyConnection device)
     {
         if (metadata is null)
             return new Result<bool>(false, Status.Skipped, "No device.yml provided (--device-yml).");
 
-        using var device = new AsyncDevice(portName);
         var mismatches = new List<string>();
 
         int whoAmI = await device.ReadWhoAmIAsync();
@@ -111,11 +109,11 @@ internal class DeviceInterfaceSuite : Suite
             .Select(entry => new DynamicTest(
                 entry.Value.Name,
                 $"Reads register '{entry.Value.Name}' (address {entry.Key}) and parses the reply with its generated GetPayload parser.",
-                (portName, cancellationToken) => CheckRegisterAsync(entry.Key, entry.Value, portName, cancellationToken)))
+                (device, cancellationToken) => CheckRegisterAsync(entry.Key, entry.Value, device, cancellationToken)))
             .ToList();
     }
 
-    private static async Task<IResult> CheckRegisterAsync(int address, Type registerType, string portName, CancellationToken cancellationToken)
+    private static async Task<IResult> CheckRegisterAsync(int address, Type registerType, VerifyConnection device, CancellationToken cancellationToken)
     {
         const BindingFlags staticMembers = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
 
@@ -125,7 +123,6 @@ internal class DeviceInterfaceSuite : Suite
 
         var payloadType = (PayloadType)registerType.GetField("RegisterType", staticMembers)!.GetValue(null)!;
 
-        using var device = new AsyncDevice(portName);
         HarpMessage reply;
         try
         {

@@ -1,4 +1,4 @@
-﻿namespace Harp.Toolkit;
+﻿namespace Harp.Toolkit.Verify;
 
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
 public class HarpTestAttribute : Attribute

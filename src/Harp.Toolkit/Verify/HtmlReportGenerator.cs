@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using RazorLight;
 
-namespace Harp.Toolkit;
+namespace Harp.Toolkit.Verify;
 
 public static class HtmlReportGenerator
 {

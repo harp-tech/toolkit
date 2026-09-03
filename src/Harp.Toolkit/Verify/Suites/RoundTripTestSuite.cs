@@ -13,18 +13,15 @@ internal class RoundTripTestSuite : Suite
     public override string Description => "A bunch of tests to benchmark round trip read/writes.";
 
     [HarpTest(Description = "Benchmarks the round trip time for a WhoAmI read command.")]
-    public async Task<IResult> BenchmarkRoundTrip(string portName)
+    public async Task<IResult> BenchmarkRoundTrip(VerifyConnection device)
     {
         const int n = 1000;
         double[] timestamps = new double[n];
         HarpMessage probe = Bonsai.Harp.WhoAmI.FromPayload(MessageType.Read, default);
-        using (var device = new AsyncDevice(portName))
+        for (int i = 0; i < n; i++)
         {
-            for (int i = 0; i < n; i++)
-            {
-                var reply = await device.CommandAsync(probe);
-                timestamps[i] = reply.GetTimestamp();
-            }
+            var reply = await device.CommandAsync(probe);
+            timestamps[i] = reply.GetTimestamp();
         }
         var derivatives = timestamps
             .Zip(timestamps.Skip(1), (previous, current) => (current - previous) * 1e3)
