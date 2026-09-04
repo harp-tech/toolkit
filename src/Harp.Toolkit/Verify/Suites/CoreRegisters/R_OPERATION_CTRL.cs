@@ -53,7 +53,7 @@ internal class R_OPERATION_CTRL : Suite
     [HarpTest(Description = "Validates that enabling HEARTBEAT_EN causes the device to emit R_HEARTBEAT events.")]
     public async Task<IResult> HeartbeatEnEmitsEvents(VerifyConnection device)
     {
-        byte originalOpCtrl = 0;
+        byte? originalOpCtrl = null;
 
         try
         {
@@ -83,7 +83,7 @@ internal class R_OPERATION_CTRL : Suite
     [HarpTest(Description = "Validates that HEARTBEAT_EN (bit 2) takes precedence over ALIVE_EN (bit 7): when both are set, R_HEARTBEAT events are emitted and R_TIMESTAMP_SECOND events are not.")]
     public async Task<IResult> HeartbeatEnPrecedenceOverAliveEn(VerifyConnection device)
     {
-        byte originalOpCtrl = 0;
+        byte? originalOpCtrl = null;
 
         try
         {
@@ -116,7 +116,7 @@ internal class R_OPERATION_CTRL : Suite
     [HarpTest(Description = "Validates that ALIVE_EN (deprecated, bit 7) causes R_TIMESTAMP_SECOND events to be emitted when HEARTBEAT_EN is not set.")]
     public async Task<IResult> AliveEnEmitsTimestampEvents(VerifyConnection device)
     {
-        byte originalOpCtrl = 0;
+        byte? originalOpCtrl = null;
 
         try
         {
@@ -146,14 +146,13 @@ internal class R_OPERATION_CTRL : Suite
     [HarpTest(Description = "Validates that the DUMP bit triggers a burst of all core register reads after an OpCtrl write.")]
     public async Task<IResult> RegisterDump(VerifyConnection device)
     {
-        byte originalOpCtrl = 0;
+        byte? originalOpCtrl = null;
 
         try
         {
-            // Read original state before modifying
             originalOpCtrl = await device.ReadByteAsync(OperationControl.Address);
             var messages = await device.WriteAndCollectAsync(
-                new[] { HarpMessage.FromByte(OperationControl.Address, MessageType.Write, (byte)(originalOpCtrl | 0x08)) },
+                new[] { HarpMessage.FromByte(OperationControl.Address, MessageType.Write, (byte)(originalOpCtrl.GetValueOrDefault() | 0x08)) },
                 TimeSpan.FromSeconds(1));
 
             var opRegWriteResponse = messages.FirstOrDefault(m => m.Address == OperationControl.Address && m.MessageType == MessageType.Write);
@@ -183,11 +182,14 @@ internal class R_OPERATION_CTRL : Suite
         }
     }
 
-    private static async Task RestoreOperationControlAsync(VerifyConnection device, byte value)
+    private static async Task RestoreOperationControlAsync(VerifyConnection device, byte? value)
     {
+        if (!value.HasValue)
+            return;
+
         try
         {
-            await device.CommandAsync(HarpMessage.FromByte(OperationControl.Address, MessageType.Write, value));
+            await device.CommandAsync(HarpMessage.FromByte(OperationControl.Address, MessageType.Write, value.GetValueOrDefault()));
         }
         catch
         {
