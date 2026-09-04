@@ -1,6 +1,5 @@
 ﻿
 using Bonsai.Harp;
-using System.Diagnostics;
 namespace Harp.Toolkit.Verify.Suites;
 
 internal class R_TIMESTAMP_SECOND : Suite
@@ -50,7 +49,6 @@ internal class R_TIMESTAMP_SECOND : Suite
     [HarpTest(Description = "Validates that writing a past timestamp value takes effect and can be read back.")]
     public async Task<IResult> WritePastValueRoundTrip(VerifyConnection device)
     {
-        var sw = Stopwatch.StartNew();
         var current = await device.ReadTimestampSecondsAsync();
         var tPast = current >= 10 ? current - 10 : 0u;
 
