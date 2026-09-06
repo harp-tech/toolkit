@@ -160,17 +160,32 @@ internal class R_OPERATION_CTRL : Suite
             {
                 return new AssertionResult(false, "No response received for OpCtrl write.");
             }
-            var coreReads = messages
-                .Select((m, i) => (msg: m, idx: i))
-                .Where(x => x.msg.Address < 32 && x.msg.MessageType == MessageType.Read)
+            var replies = messages
+                .Where(m => m.MessageType == MessageType.Read)
+                .GroupBy(m => m.Address)
+                .ToDictionary(g => g.Key, g => g.First());
+
+            var declared = CoreSchema.Metadata.Registers.Values;
+            var missing = declared
+                .Where(r => !replies.ContainsKey(r.Address))
+                .Select(r => r.Address)
+                .OrderBy(a => a)
                 .ToList();
-            var uniqueCoreAddresses = coreReads.Select(x => x.msg.Address).Distinct().ToHashSet();
-            var missing = Enumerable.Range(0, 20).Where(a => !uniqueCoreAddresses.Contains(a)).ToList();
             if (missing.Count > 0)
                 return new AssertionResult(false,
-                    $"Missing Read replies for {missing.Count} core address(es): {string.Join(", ", missing)}.");
+                    $"Missing Read replies for {missing.Count} declared core address(es): {string.Join(", ", missing)}.");
 
-            return new AssertionResult(true, "All core register reads received after OpCtrl write.");
+            var mismatched = declared
+                .Select(r => (Register: r, Replied: replies[r.Address].PayloadType & ~PayloadType.Timestamp))
+                .Where(x => x.Replied != x.Register.Type)
+                .Select(x => $"address {x.Register.Address} declares {x.Register.Type} but replied {x.Replied}")
+                .ToList();
+            if (mismatched.Count > 0)
+                return new AssertionResult(false,
+                    $"Payload type mismatch on {mismatched.Count} core register(s): {string.Join("; ", mismatched)}.");
+
+            return new AssertionResult(true,
+                $"All {declared.Count} declared core registers were dumped with the expected payload type.");
         }
         catch (Exception ex)
         {
