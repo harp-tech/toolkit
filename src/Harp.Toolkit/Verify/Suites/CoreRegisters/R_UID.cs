@@ -6,7 +6,7 @@ internal class R_UID : Suite
     private const byte ExpectedLength = 16;
     public override string Description => "UID Register Tests";
 
-    [HarpTest(Description = "Validates that UID register has exactly 16 bytes.")]
+    [HarpTest(Description = "Validates that UID register has exactly 16 bytes.", Prerelease = true)]
     public async Task<IResult> AssertLength(VerifyConnection device)
     {
         var value = await device.ReadByteArrayAsync(Address);
@@ -17,7 +17,7 @@ internal class R_UID : Suite
                 $"Expected length of register to be {ExpectedLength}, got {value.Length} instead.");
     }
 
-    [HarpTest(Description = "Checks if the register value is 0, indicating it is likely not used.")]
+    [HarpTest(Description = "Checks if the register value is 0, indicating it is likely not used.", Prerelease = true)]
     public async Task<IResult> AssertReturnsZero(VerifyConnection device)
     {
         var value = await device.ReadByteArrayAsync(Address);

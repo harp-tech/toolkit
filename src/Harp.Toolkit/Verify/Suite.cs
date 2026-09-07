@@ -16,9 +16,11 @@ public abstract class Suite
     /// </summary>
     protected virtual IReadOnlyList<DynamicTest> DynamicTests { get; } = new List<DynamicTest>();
 
-    public int TestCount => CollectTests().Count() + DynamicTests.Count;
+    public int GetTestCount(bool includePrerelease) => CollectTests(includePrerelease).Count() + DynamicTests.Count;
 
-    private IEnumerable<(MethodInfo Method, HarpTestAttribute Attribute)> CollectTests()
+    public int GetPrereleaseTestCount() => CollectAllTests().Count(x => x.Attribute.Prerelease);
+
+    private IEnumerable<(MethodInfo Method, HarpTestAttribute Attribute)> CollectAllTests()
     {
         return GetType()
             .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
@@ -26,9 +28,14 @@ public abstract class Suite
             .Where(x => x.Attribute != null);
     }
 
-    public async IAsyncEnumerable<MethodResult> RunAllAsync(VerifyConnection connection, [EnumeratorCancellation] CancellationToken cancellationToken = default, Action<string, string>? onTestStart = null)
+    private IEnumerable<(MethodInfo Method, HarpTestAttribute Attribute)> CollectTests(bool includePrerelease)
     {
-        foreach (var (method, attr) in CollectTests())
+        return CollectAllTests().Where(x => includePrerelease || !x.Attribute.Prerelease);
+    }
+
+    public async IAsyncEnumerable<MethodResult> RunAllAsync(VerifyConnection connection, bool includePrerelease, [EnumeratorCancellation] CancellationToken cancellationToken = default, Action<string, string>? onTestStart = null)
+    {
+        foreach (var (method, attr) in CollectTests(includePrerelease))
         {
             cancellationToken.ThrowIfCancellationRequested();
 

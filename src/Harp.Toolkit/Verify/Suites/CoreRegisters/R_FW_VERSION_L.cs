@@ -6,7 +6,7 @@ internal class R_FW_VERSION_L : Suite
 {
     public override string Description => "Firmware Version Low Register Tests";
 
-    [HarpTest(Description = "Validates that FwVersionLow matches byte 4 of R_VERSION.")]
+    [HarpTest(Description = "Validates that FwVersionLow matches byte 4 of R_VERSION.", Prerelease = true)]
     public async Task<IResult> AssertConsistentWithVersion(VerifyConnection device)
     {
         var versionArray = await device.ReadByteArrayAsync(Version.Address);

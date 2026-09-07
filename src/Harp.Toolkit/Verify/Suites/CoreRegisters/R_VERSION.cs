@@ -6,7 +6,7 @@ internal class R_VERSION : Suite
 {
     public override string Description => "Version Register Tests";
 
-    [HarpTest(Description = "Validates that Version register is readable.")]
+    [HarpTest(Description = "Validates that Version register is readable.", Prerelease = true)]
     public async Task<IResult> IsReadable(VerifyConnection device)
     {
         try
@@ -20,13 +20,13 @@ internal class R_VERSION : Suite
         }
     }
 
-    [HarpTest(Description = "Validates that Version register has exactly 32 bytes.")]
+    [HarpTest(Description = "Validates that Version register has exactly 32 bytes.", Prerelease = true)]
     public async Task<IResult> AssertLength(VerifyConnection device)
     {
         return await RegisterHelpers.AssertReadableArrayAsync(device, Version.Address, Version.RegisterLength, "Version");
     }
 
-    [HarpTest(Description = "Validates that Version register is NOT writable.")]
+    [HarpTest(Description = "Validates that Version register is NOT writable.", Prerelease = true)]
     public async Task<IResult> IsNotWritable(VerifyConnection device)
     {
         var req = HarpMessage.FromByte(Version.Address, MessageType.Write, new byte[Version.RegisterLength]);
@@ -38,7 +38,7 @@ internal class R_VERSION : Suite
                 : "Version register should NOT be writable.");
     }
 
-    [HarpTest(Description = "Reports the version information declared by the device.")]
+    [HarpTest(Description = "Reports the version information declared by the device.", Prerelease = true)]
     public async Task<IResult> ReportVersionInformation(VerifyConnection device)
     {
         try

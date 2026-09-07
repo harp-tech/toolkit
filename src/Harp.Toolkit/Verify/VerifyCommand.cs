@@ -23,6 +23,12 @@ public class VerifyCommand : Command
             Required = false,
         };
 
+        Option<bool> prereleaseOption = new("--prerelease")
+        {
+            Description = "Include checks against specification text outside the stable baseline.",
+            Required = false,
+        };
+
         Option<string?> clockPortOption = new("--clock-port")
         {
             Description = "Serial port of the reference clock device. Enables clock alignment tests.",
@@ -57,6 +63,7 @@ public class VerifyCommand : Command
         Options.Add(portNameOption);
         Options.Add(fileOption);
         Options.Add(verboseOption);
+        Options.Add(prereleaseOption);
         Options.Add(clockPortOption);
         Options.Add(ppsEventOption);
         Options.Add(clockSamplesOption);
@@ -66,17 +73,18 @@ public class VerifyCommand : Command
             string portName = parsedResult.GetRequiredValue(portNameOption);
             FileInfo? reportFile = parsedResult.GetValue(fileOption);
             bool verbose = parsedResult.GetValue(verboseOption);
+            bool prerelease = parsedResult.GetValue(prereleaseOption);
             string? clockPort = parsedResult.GetValue(clockPortOption);
             ClockTestOptions? clockOptions = clockPort is null ? null : new ClockTestOptions(
                 ClockPort: clockPort,
                 PpsEvent: parsedResult.GetValue(ppsEventOption),
                 ClockSamples: parsedResult.GetValue(clockSamplesOption));
             FileInfo? deviceYml = parsedResult.GetValue(deviceYmlOption);
-            return RunVerification(portName, reportFile, verbose, clockOptions, deviceYml, CancellationToken.None);
+            return RunVerification(portName, reportFile, verbose, prerelease, clockOptions, deviceYml, CancellationToken.None);
         });
     }
 
-    static async Task RunVerification(string portName, FileInfo? reportFile, bool verbose, ClockTestOptions? clockOptions, FileInfo? deviceYml, CancellationToken cancellationToken)
+    static async Task RunVerification(string portName, FileInfo? reportFile, bool verbose, bool prerelease, ClockTestOptions? clockOptions, FileInfo? deviceYml, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine($"Running tests on [bold]{portName}[/]...");
         if (clockOptions is not null)
@@ -92,11 +100,21 @@ public class VerifyCommand : Command
             AnsiConsole.MarkupLine($" [green]Done![/] ({deviceMetadata.Registers.Count} registers)");
         }
 
-        var runner = new CoreRunner(clockOptions, deviceMetadata, deviceRawYaml);
+        var runner = new CoreRunner(prerelease, clockOptions, deviceMetadata, deviceRawYaml);
+        if (runner.PrereleaseTestCount > 0)
+        {
+            if (prerelease)
+                AnsiConsole.MarkupLine($"Including [bold]{runner.PrereleaseTestCount}[/] prerelease checks.");
+            else
+                AnsiConsole.MarkupLine($"[yellow]{runner.PrereleaseTestCount} prerelease checks were not run. Rerun with --prerelease to include them.[/]");
+        }
+
         var report = new Report
         {
             DeviceName = $"Harp Device ({portName})",
-            RunDate = DateTime.Now
+            RunDate = DateTime.Now,
+            IncludePrerelease = prerelease,
+            PrereleaseTestCount = runner.PrereleaseTestCount
         };
 
         using var connection = await VerifyConnection.OpenAsync(portName, cancellationToken);
@@ -203,9 +221,10 @@ public class VerifyCommand : Command
     class CoreRunner : Runner
     {
         public CoreRunner(
+            bool includePrerelease,
             ClockTestOptions? clockOptions = null,
             DeviceMetadata? deviceMetadata = null,
-            string? deviceRawYaml = null) : base()
+            string? deviceRawYaml = null) : base(includePrerelease)
         {
             AddSuite(new R_WHO_AM_I());
             AddSuite(new R_HW_VERSION_H());

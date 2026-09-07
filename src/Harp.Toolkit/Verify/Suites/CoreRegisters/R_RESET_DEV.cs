@@ -26,13 +26,13 @@ internal class R_RESET_DEV : Suite
                 : $"ResetDev read 0x{value:X2}. {DescribeReadViolation(flags)}");
     }
 
-    [HarpTest(Description = "Validates that ResetDev rejects a write setting BOOT_DEF, which is read-only state.")]
+    [HarpTest(Description = "Validates that ResetDev rejects a write setting BOOT_DEF, which is read-only state.", Prerelease = true)]
     public async Task<IResult> BootFromDefaultIsNotWritable(VerifyConnection device)
     {
         return await AssertReadOnlyBitRejectedAsync(device, ResetFlags.BootFromDefault, "BOOT_DEF");
     }
 
-    [HarpTest(Description = "Validates that ResetDev rejects a write setting BOOT_EE, which is read-only state.")]
+    [HarpTest(Description = "Validates that ResetDev rejects a write setting BOOT_EE, which is read-only state.", Prerelease = true)]
     public async Task<IResult> BootFromEepromIsNotWritable(VerifyConnection device)
     {
         return await AssertReadOnlyBitRejectedAsync(device, ResetFlags.BootFromEeprom, "BOOT_EE");

@@ -6,7 +6,7 @@ internal class R_CORE_VERSION_L : Suite
 {
     public override string Description => "Core Version Low Register Tests";
 
-    [HarpTest(Description = "Validates that CoreVersionLow matches byte 1 of R_VERSION.")]
+    [HarpTest(Description = "Validates that CoreVersionLow matches byte 1 of R_VERSION.", Prerelease = true)]
     public async Task<IResult> AssertConsistentWithVersion(VerifyConnection device)
     {
         var versionArray = await device.ReadByteArrayAsync(Version.Address);

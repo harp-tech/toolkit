@@ -4,7 +4,7 @@ internal class R_SERIAL_NUMBER : Suite
 {
     public override string Description => "Serial Number Register Tests";
 
-    [HarpTest(Description = "Validates that SerialNumber matches the first two bytes of R_UID.")]
+    [HarpTest(Description = "Validates that SerialNumber matches the first two bytes of R_UID.", Prerelease = true)]
     public async Task<IResult> AssertConsistentWithUid(VerifyConnection device)
     {
         var uidValue = await device.ReadByteArrayAsync(R_UID.Address);

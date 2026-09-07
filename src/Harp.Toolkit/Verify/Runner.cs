@@ -5,12 +5,16 @@ namespace Harp.Toolkit.Verify;
 public class Runner
 {
     private readonly List<Suite> suites = new();
+    private readonly bool includePrerelease;
 
-    public Runner()
+    public Runner(bool includePrerelease)
     {
+        this.includePrerelease = includePrerelease;
     }
 
-    public int TestCount => suites.Sum(s => s.TestCount);
+    public int TestCount => suites.Sum(s => s.GetTestCount(includePrerelease));
+
+    public int PrereleaseTestCount => suites.Sum(s => s.GetPrereleaseTestCount());
 
     public IEnumerable<Suite> CollectSuites()
     {
@@ -21,7 +25,7 @@ public class Runner
     {
         foreach (var suite in suites)
         {
-            await foreach (var result in suite.RunAllAsync(connection, cancellationToken, (testName, testDesc) => onTestStart?.Invoke(suite, testName, testDesc)))
+            await foreach (var result in suite.RunAllAsync(connection, includePrerelease, cancellationToken, (testName, testDesc) => onTestStart?.Invoke(suite, testName, testDesc)))
             {
                 yield return (suite, result);
             }

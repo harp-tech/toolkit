@@ -8,7 +8,7 @@ internal class R_TAG : Suite
     private const int ExpectedLength = 8;
     public override string Description => "Tag Register Tests";
 
-    [HarpTest(Description = "Validates that Tag register is readable.")]
+    [HarpTest(Description = "Validates that Tag register is readable.", Prerelease = true)]
     public async Task<IResult> IsReadable(VerifyConnection device)
     {
         try
@@ -22,13 +22,13 @@ internal class R_TAG : Suite
         }
     }
 
-    [HarpTest(Description = "Validates that Tag register has exactly 8 bytes.")]
+    [HarpTest(Description = "Validates that Tag register has exactly 8 bytes.", Prerelease = true)]
     public async Task<IResult> AssertLength(VerifyConnection device)
     {
         return await RegisterHelpers.AssertReadableArrayAsync(device, Address, ExpectedLength, "Tag");
     }
 
-    [HarpTest(Description = "Validates that Tag register is NOT writable.")]
+    [HarpTest(Description = "Validates that Tag register is NOT writable.", Prerelease = true)]
     public async Task<IResult> IsNotWritable(VerifyConnection device)
     {
         var req = HarpMessage.FromByte(Address, MessageType.Write, new byte[ExpectedLength]);

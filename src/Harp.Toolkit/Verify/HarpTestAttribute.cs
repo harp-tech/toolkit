@@ -4,4 +4,6 @@
 public class HarpTestAttribute : Attribute
 {
     public string? Description { get; set; }
+
+    public bool Prerelease { get; set; }
 }

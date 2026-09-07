@@ -32,6 +32,22 @@
             </div>
         </div>
 
+        @if (Model.PrereleaseTestCount > 0)
+        {
+            @if (Model.IncludePrerelease)
+            {
+                <div class="alert alert-info" role="alert">
+                    This run includes @Model.PrereleaseTestCount prerelease checks, which assert specification text outside the stable baseline.
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning" role="alert">
+                    @Model.PrereleaseTestCount prerelease checks were not run. They assert specification text outside the stable baseline, and are included only with the <code>--prerelease</code> option.
+                </div>
+            }
+        }
+
         @foreach (var suite in Model.Suites)
         {
             <div class="card">
