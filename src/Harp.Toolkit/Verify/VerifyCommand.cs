@@ -100,24 +100,28 @@ public class VerifyCommand : Command
             AnsiConsole.MarkupLine($" [green]Done![/] ({deviceMetadata.Registers.Count} registers)");
         }
 
-        var runner = new CoreRunner(prerelease, clockOptions, deviceMetadata, deviceRawYaml);
-        if (runner.PrereleaseTestCount > 0)
+        using var connection = await VerifyConnection.OpenAsync(portName, cancellationToken);
+        var target = await ProtocolTarget.ResolveAsync(connection, prerelease, cancellationToken);
+        var runner = new CoreRunner(target.IncludePrerelease, clockOptions, deviceMetadata, deviceRawYaml);
+        var notice = GetProtocolNotice(target, runner.PrereleaseTestCount);
+
+        AnsiConsole.MarkupLine(DescribeProtocolSelection(target));
+        if (notice.Length > 0)
         {
-            if (prerelease)
-                AnsiConsole.MarkupLine($"Including [bold]{runner.PrereleaseTestCount}[/] prerelease checks.");
-            else
-                AnsiConsole.MarkupLine($"[yellow]{runner.PrereleaseTestCount} prerelease checks were not run. Rerun with --prerelease to include them.[/]");
+            var style = target.IncludePrerelease ? "grey" : "yellow";
+            AnsiConsole.MarkupLine($"[{style}]{Markup.Escape(notice)}[/]");
         }
 
         var report = new Report
         {
             DeviceName = $"Harp Device ({portName})",
             RunDate = DateTime.Now,
-            IncludePrerelease = prerelease,
-            PrereleaseTestCount = runner.PrereleaseTestCount
+            IncludePrerelease = target.IncludePrerelease,
+            ProtocolNotice = notice,
+            DeclaredProtocolVersion = GetDeclaredVersion(target),
+            CheckedProtocolVersion = GetCheckedVersion(target),
+            RegisterSetVersion = CoreSchema.Version
         };
-
-        using var connection = await VerifyConnection.OpenAsync(portName, cancellationToken);
 
         int currentTest = 0;
         await foreach (var (suite, result) in runner.RunAllAsync(connection, cancellationToken, (suite, testName, testDesc) =>
@@ -204,6 +208,63 @@ public class VerifyCommand : Command
             await File.WriteAllTextAsync(fileName, html, cancellationToken);
             AnsiConsole.MarkupLine($"[green]Done![/] Report generated: [link]{fileName}[/]");
         }
+    }
+
+    static string GetDeclaredVersion(ProtocolTarget target)
+    {
+        return target.DeclaredVersion.HasValue
+            ? target.DeclaredVersion.GetValueOrDefault().ToString()
+            : "not declared";
+    }
+
+    static string DescribeProtocolSelection(ProtocolTarget target)
+    {
+        if (target.IncludePrerelease)
+        {
+            return $"Checking against protocol version [bold]{GetDeclaredVersion(target)}[/], " +
+                "which is not yet ratified.";
+        }
+
+        return $"Protocol version [bold]{GetDeclaredVersion(target)}[/], " +
+            $"checking against [bold]{GetCheckedVersion(target)}[/].";
+    }
+
+    static string GetCheckedVersion(ProtocolTarget target)
+    {
+        if (target.IncludePrerelease)
+            return $"{GetDeclaredVersion(target)}, which is not yet ratified";
+
+        return target.Scope == ProtocolScope.V2
+            ? "v1, since v2 is not yet ratified"
+            : "v1";
+    }
+
+    static string GetProtocolNotice(ProtocolTarget target, int count)
+    {
+        if (target.Scope == ProtocolScope.Unsupported)
+        {
+            return $"This device declares protocol {GetDeclaredVersion(target)}, which this toolkit " +
+                "does not cover. The results below are against the v1 baseline only.";
+        }
+
+        if (target.Scope == ProtocolScope.V1)
+        {
+            if (target.DeclaredVersion.HasValue)
+                return $"This device declares protocol {GetDeclaredVersion(target)}, so only the v1 baseline applies.";
+
+            var recommendation = "Updating to a firmware that implements R_VERSION would let it be " +
+                "verified against the current protocol.";
+            return target.PrereleaseRequested
+                ? $"This device declares no protocol version, so --prerelease had no effect. {recommendation}"
+                : $"This device declares no protocol version. {recommendation}";
+        }
+
+        if (count == 0)
+            return string.Empty;
+
+        return target.PrereleaseRequested
+            ? $"Including {count} prerelease checks, which this device declares support for."
+            : $"{count} prerelease checks were not run. Rerun with --prerelease to include them.";
     }
 
     static string GetResultMarkup(IResult result)

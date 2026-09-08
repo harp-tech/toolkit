@@ -32,20 +32,24 @@
             </div>
         </div>
 
-        @if (Model.PrereleaseTestCount > 0)
+        <div class="card mb-4">
+            <div class="card-body">
+                <dl class="row mb-0 small">
+                    <dt class="col-sm-4">Protocol version declared</dt>
+                    <dd class="col-sm-8">@Model.DeclaredProtocolVersion</dd>
+                    <dt class="col-sm-4">Checked against</dt>
+                    <dd class="col-sm-8">@Model.CheckedProtocolVersion</dd>
+                    <dt class="col-sm-4">Register set</dt>
+                    <dd class="col-sm-8">Harp.Generators @Model.RegisterSetVersion</dd>
+                </dl>
+            </div>
+        </div>
+
+        @if (Model.ProtocolNotice.Length > 0)
         {
-            @if (Model.IncludePrerelease)
-            {
-                <div class="alert alert-info" role="alert">
-                    This run includes @Model.PrereleaseTestCount prerelease checks, which assert specification text outside the stable baseline.
-                </div>
-            }
-            else
-            {
-                <div class="alert alert-warning" role="alert">
-                    @Model.PrereleaseTestCount prerelease checks were not run. They assert specification text outside the stable baseline, and are included only with the <code>--prerelease</code> option.
-                </div>
-            }
+            <div class="alert @(Model.IncludePrerelease ? "alert-info" : "alert-warning")" role="alert">
+                @Model.ProtocolNotice
+            </div>
         }
 
         @foreach (var suite in Model.Suites)

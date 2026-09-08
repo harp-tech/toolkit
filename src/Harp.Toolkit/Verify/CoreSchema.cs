@@ -1,4 +1,5 @@
-﻿using Harp.Generators;
+﻿using System.Reflection;
+using Harp.Generators;
 
 namespace Harp.Toolkit.Verify;
 
@@ -11,11 +12,31 @@ internal static class CoreSchema
     const string ResourceName = "Harp.Generators.core.yml";
 
     static readonly Lazy<DeviceMetadata> metadata = new(ReadMetadata);
+    static readonly Lazy<string> version = new(ReadVersion);
 
     /// <summary>
     /// Gets the core register metadata declared by the pinned generator version.
     /// </summary>
     public static DeviceMetadata Metadata => metadata.Value;
+
+    /// <summary>
+    /// Gets the version of the generator package supplying the core register metadata. This
+    /// version fully determines the register set, since the metadata ships inside the package.
+    /// </summary>
+    public static string Version => version.Value;
+
+    static string ReadVersion()
+    {
+        var assembly = typeof(InterfaceGenerator).Assembly;
+        var informational = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        var text = informational ?? assembly.GetName().Version?.ToString();
+        if (string.IsNullOrEmpty(text))
+            return "unknown";
+
+        var metadataSeparator = text.IndexOf('+');
+        return metadataSeparator < 0 ? text : text[..metadataSeparator];
+    }
 
     static DeviceMetadata ReadMetadata()
     {
