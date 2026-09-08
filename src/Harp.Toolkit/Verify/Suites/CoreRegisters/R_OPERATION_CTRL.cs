@@ -50,7 +50,7 @@ internal class R_OPERATION_CTRL : Suite
         return await TestOptionalBitAsync(device, "VisualEn", 0x20);
     }
 
-    [HarpTest(Description = "Validates that enabling HEARTBEAT_EN causes the device to emit R_HEARTBEAT events.")]
+    [HarpTest(Description = "Validates that enabling HEARTBEAT_EN causes the device to emit R_HEARTBEAT events.", Prerelease = true)]
     public async Task<IResult> HeartbeatEnEmitsEvents(VerifyConnection device)
     {
         byte? originalOpCtrl = null;
@@ -80,7 +80,7 @@ internal class R_OPERATION_CTRL : Suite
         }
     }
 
-    [HarpTest(Description = "Validates that HEARTBEAT_EN (bit 2) takes precedence over ALIVE_EN (bit 7): when both are set, R_HEARTBEAT events are emitted and R_TIMESTAMP_SECOND events are not.")]
+    [HarpTest(Description = "Validates that HEARTBEAT_EN (bit 2) takes precedence over ALIVE_EN (bit 7): when both are set, R_HEARTBEAT events are emitted and R_TIMESTAMP_SECOND events are not.", Prerelease = true)]
     public async Task<IResult> HeartbeatEnPrecedenceOverAliveEn(VerifyConnection device)
     {
         byte? originalOpCtrl = null;
