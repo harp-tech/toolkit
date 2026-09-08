@@ -53,12 +53,12 @@ public class VerifyCommand : Command
                 result.AddError("The number of clock samples must be greater than zero.");
         });
 
-        Option<FileInfo> deviceYmlOption = new("--device-yml")
+        Option<FileInfo> metadataOption = new("--metadata")
         {
-            Description = "Path to the device's device.yml. Enables validation of the generated C# interface against a live read of every declared register, and cross-checks WhoAmI/firmware/hardware versions.",
+            Description = "The path to the file describing the device registers. Enables validation of the generated interface against a live read of every declared register, and cross-checks the WhoAmI, firmware and hardware versions.",
             Required = false,
         };
-        OptionValidation.AcceptExistingOnly(deviceYmlOption);
+        OptionValidation.AcceptExistingOnly(metadataOption);
 
         Options.Add(portNameOption);
         Options.Add(fileOption);
@@ -67,7 +67,7 @@ public class VerifyCommand : Command
         Options.Add(clockPortOption);
         Options.Add(ppsEventOption);
         Options.Add(clockSamplesOption);
-        Options.Add(deviceYmlOption);
+        Options.Add(metadataOption);
         SetAction(parsedResult =>
         {
             string portName = parsedResult.GetRequiredValue(portNameOption);
@@ -79,12 +79,12 @@ public class VerifyCommand : Command
                 ClockPort: clockPort,
                 PpsEvent: parsedResult.GetValue(ppsEventOption),
                 ClockSamples: parsedResult.GetValue(clockSamplesOption));
-            FileInfo? deviceYml = parsedResult.GetValue(deviceYmlOption);
-            return RunVerification(portName, reportFile, verbose, prerelease, clockOptions, deviceYml, CancellationToken.None);
+            FileInfo? metadataPath = parsedResult.GetValue(metadataOption);
+            return RunVerification(portName, reportFile, verbose, prerelease, clockOptions, metadataPath, CancellationToken.None);
         });
     }
 
-    static async Task RunVerification(string portName, FileInfo? reportFile, bool verbose, bool prerelease, ClockTestOptions? clockOptions, FileInfo? deviceYml, CancellationToken cancellationToken)
+    static async Task RunVerification(string portName, FileInfo? reportFile, bool verbose, bool prerelease, ClockTestOptions? clockOptions, FileInfo? metadataPath, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine($"Running tests on [bold]{portName}[/]...");
         if (clockOptions is not null)
@@ -92,11 +92,11 @@ public class VerifyCommand : Command
 
         DeviceMetadata? deviceMetadata = null;
         string? deviceRawYaml = null;
-        if (deviceYml is not null)
+        if (metadataPath is not null)
         {
-            AnsiConsole.Markup($"Loading device metadata from [bold]{deviceYml.FullName}[/]...");
-            deviceMetadata = GeneratorHelper.ReadDeviceMetadata(deviceYml.FullName);
-            deviceRawYaml = await File.ReadAllTextAsync(deviceYml.FullName, cancellationToken);
+            AnsiConsole.Markup($"Loading device metadata from [bold]{metadataPath.FullName}[/]...");
+            deviceMetadata = GeneratorHelper.ReadDeviceMetadata(metadataPath.FullName);
+            deviceRawYaml = await File.ReadAllTextAsync(metadataPath.FullName, cancellationToken);
             AnsiConsole.MarkupLine($" [green]Done![/] ({deviceMetadata.Registers.Count} registers)");
         }
 

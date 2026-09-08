@@ -64,7 +64,7 @@ internal class DeviceInterfaceSuite : Suite
     public Task<IResult> GenerateAndCompileInterface(VerifyConnection device)
     {
         IResult result = metadata is null
-            ? new Result<bool>(false, Status.Skipped, "No device.yml provided (--device-yml).")
+            ? new Result<bool>(false, Status.Skipped, "No device metadata provided (--metadata).")
             : registerMap is not null
                 ? new AssertionResult(true, $"Generated and compiled the interface with {registerMap.Count} registers.")
                 : new ErrorResult(compileError!);
@@ -75,7 +75,7 @@ internal class DeviceInterfaceSuite : Suite
     public async Task<IResult> DeviceIdentity(VerifyConnection device)
     {
         if (metadata is null)
-            return new Result<bool>(false, Status.Skipped, "No device.yml provided (--device-yml).");
+            return new Result<bool>(false, Status.Skipped, "No device metadata provided (--metadata).");
 
         var mismatches = new List<string>();
 
