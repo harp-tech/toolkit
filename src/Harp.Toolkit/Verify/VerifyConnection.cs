@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using System.Text;
 using Bonsai.Harp;
 
 namespace Harp.Toolkit.Verify;
@@ -23,6 +24,7 @@ public sealed class VerifyConnection : IDisposable
 
     VerifyConnection(string portName, int whoAmI)
     {
+        WhoAmI = whoAmI;
         var device = new Bonsai.Harp.Device(whoAmI)
         {
             PortName = portName,
@@ -100,6 +102,11 @@ public sealed class VerifyConnection : IDisposable
     {
         return Stopwatch.GetElapsedTime(retryStart).TotalMilliseconds < OpenTimeoutMilliseconds;
     }
+
+    /// <summary>
+    /// The device identifier validated when the connection was opened.
+    /// </summary>
+    public int WhoAmI { get; }
 
     /// <summary>
     /// Every message received from the device, before any reply correlation.
@@ -185,7 +192,14 @@ public sealed class VerifyConnection : IDisposable
 
     public async Task<int> ReadWhoAmIAsync(CancellationToken cancellationToken = default)
     {
-        return await ReadUInt16Async(WhoAmI.Address, cancellationToken);
+        return await ReadUInt16Async(Bonsai.Harp.WhoAmI.Address, cancellationToken);
+    }
+
+    public async Task<string> ReadDeviceNameAsync(CancellationToken cancellationToken = default)
+    {
+        var payload = await ReadByteArrayAsync(DeviceName.Address, cancellationToken);
+        var terminator = Array.IndexOf(payload, (byte)0);
+        return Encoding.ASCII.GetString(payload, 0, terminator < 0 ? payload.Length : terminator);
     }
 
     public async Task<int> ReadAssemblyVersionAsync(CancellationToken cancellationToken = default)
@@ -220,6 +234,35 @@ public sealed class VerifyConnection : IDisposable
     public async Task WriteTimestampSecondsAsync(uint seconds, CancellationToken cancellationToken = default)
     {
         await CommandAsync(HarpCommand.WriteUInt32(TimestampSeconds.Address, seconds), cancellationToken);
+    }
+
+    /// <summary>
+    /// Reads the identity registers reported in the run header, leaving any register the device
+    /// does not answer within the read timeout unreported rather than failing the run.
+    /// </summary>
+    internal async Task<DeviceIdentity> ReadDeviceIdentityAsync(CancellationToken cancellationToken = default)
+    {
+        var name = await TryReadAsync(ReadDeviceNameAsync, cancellationToken);
+        var hardwareVersion = await TryReadAsync(ReadHardwareVersionAsync, cancellationToken);
+        var firmwareVersion = await TryReadAsync(ReadFirmwareVersionAsync, cancellationToken);
+        return new DeviceIdentity(WhoAmI, name, hardwareVersion, firmwareVersion);
+    }
+
+    static async Task<T?> TryReadAsync<T>(
+        Func<CancellationToken, Task<T>> read,
+        CancellationToken cancellationToken)
+        where T : class
+    {
+        using var readTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        readTimeout.CancelAfter(IdentityReadTimeoutMilliseconds);
+        try
+        {
+            return await read(readTimeout.Token);
+        }
+        catch (Exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
     }
 
     async Task WaitUntilReadyAsync(CancellationToken cancellationToken)

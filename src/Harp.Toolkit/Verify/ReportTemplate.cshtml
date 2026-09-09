@@ -22,19 +22,22 @@
 </head>
 <body>
     <div class="container py-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="display-5 mb-0">@Model.DeviceName</h1>
-                <p class="text-muted mb-0">Test Execution Report &bull; @Model.RunDate.ToString("MMMM dd, yyyy HH:mm:ss")</p>
-            </div>
-            <div class="text-end">
-                <span class="badge bg-primary">Harp Toolkit Test</span>
-            </div>
+        <div class="mb-4">
+            <h1 class="display-5 mb-0">@Model.DeviceName</h1>
+            <p class="text-muted mb-0">Harp conformance report &bull; @Model.RunDate.ToString("MMMM dd, yyyy HH:mm:ss")</p>
         </div>
 
         <div class="card mb-4">
             <div class="card-body">
                 <dl class="row mb-0 small">
+                    <dt class="col-sm-4">WhoAmI</dt>
+                    <dd class="col-sm-8">@Model.WhoAmI</dd>
+                    <dt class="col-sm-4">Serial port</dt>
+                    <dd class="col-sm-8">@Model.PortName</dd>
+                    <dt class="col-sm-4">Hardware version</dt>
+                    <dd class="col-sm-8">@Model.HardwareVersion</dd>
+                    <dt class="col-sm-4">Firmware version</dt>
+                    <dd class="col-sm-8">@Model.FirmwareVersion</dd>
                     <dt class="col-sm-4">Protocol version declared</dt>
                     <dd class="col-sm-8">@Model.DeclaredProtocolVersion</dd>
                     <dt class="col-sm-4">Checked against</dt>

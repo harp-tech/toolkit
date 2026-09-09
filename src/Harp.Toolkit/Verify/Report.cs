@@ -3,6 +3,10 @@
 public class Report
 {
     public string DeviceName { get; set; } = "Unknown Device";
+    public string PortName { get; set; } = string.Empty;
+    public string WhoAmI { get; set; } = string.Empty;
+    public string HardwareVersion { get; set; } = string.Empty;
+    public string FirmwareVersion { get; set; } = string.Empty;
     public DateTime RunDate { get; set; } = DateTime.Now;
     public bool IncludePrerelease { get; set; }
     public string ProtocolNotice { get; set; } = string.Empty;

@@ -101,10 +101,12 @@ public class VerifyCommand : Command
         }
 
         using var connection = await VerifyConnection.OpenAsync(portName, cancellationToken);
+        var identity = await connection.ReadDeviceIdentityAsync(cancellationToken);
         var target = await ProtocolTarget.ResolveAsync(connection, prerelease, cancellationToken);
         var runner = new CoreRunner(target.IncludePrerelease, clockOptions, deviceMetadata, deviceRawYaml);
         var notice = GetProtocolNotice(target, runner.PrereleaseTestCount);
 
+        AnsiConsole.MarkupLine(DescribeDeviceIdentity(identity, portName));
         AnsiConsole.MarkupLine(DescribeProtocolSelection(target));
         if (notice.Length > 0)
         {
@@ -114,7 +116,11 @@ public class VerifyCommand : Command
 
         var report = new Report
         {
-            DeviceName = $"Harp Device ({portName})",
+            DeviceName = identity.Name is { Length: > 0 } name ? name : "Harp Device",
+            PortName = portName,
+            WhoAmI = identity.WhoAmI.ToString(),
+            HardwareVersion = identity.HardwareVersion?.ToString() ?? "not reported",
+            FirmwareVersion = identity.FirmwareVersion?.ToString() ?? "not reported",
             RunDate = DateTime.Now,
             IncludePrerelease = target.IncludePrerelease,
             ProtocolNotice = notice,
@@ -215,6 +221,14 @@ public class VerifyCommand : Command
         return target.DeclaredVersion.HasValue
             ? target.DeclaredVersion.GetValueOrDefault().ToString()
             : "not declared";
+    }
+
+    static string DescribeDeviceIdentity(DeviceIdentity identity, string portName)
+    {
+        var name = identity.Name is { Length: > 0 } deviceName ? deviceName : "unnamed device";
+        return $"Device [bold]{Markup.Escape(name)}[/] on {portName}, WhoAmI [bold]{identity.WhoAmI}[/], " +
+            $"hardware {identity.HardwareVersion?.ToString() ?? "not reported"}, " +
+            $"firmware {identity.FirmwareVersion?.ToString() ?? "not reported"}.";
     }
 
     static string DescribeProtocolSelection(ProtocolTarget target)
