@@ -10,13 +10,18 @@ internal class R_TIMESTAMP_SECOND : Suite
     public async Task<IResult> IsWritable(VerifyConnection device)
     {
         const uint setSeconds = 42;
+        const double maximumElapsedSeconds = 2.0;
         await device.WriteTimestampSecondsAsync(setSeconds);
         await Task.Delay(1);
         HarpMessage response = await device.CommandAsync(TimestampSeconds.FromPayload(MessageType.Read, default));
         double readSeconds = response.GetTimestamp();
+        double elapsedSeconds = readSeconds - setSeconds;
         return new AssertionResult(
-            Math.Abs(readSeconds - setSeconds) < 1.0,
-            (success) => success ? "TimestampSeconds register is writable and updates as expected." : $"TimestampSeconds register is not writable. Expected value: {setSeconds}, read value: {readSeconds}.");
+            elapsedSeconds >= 0 && elapsedSeconds < maximumElapsedSeconds,
+            (success) => success
+                ? "TimestampSeconds register is writable and updates as expected."
+                : $"Wrote {setSeconds} to TimestampSeconds and the reply timestamp was {readSeconds:F6}, " +
+                  $"outside the expected range of {setSeconds} to {setSeconds + maximumElapsedSeconds}.");
     }
 
     [HarpTest(Description = "Validates that TimestampSeconds register is readable.")]
