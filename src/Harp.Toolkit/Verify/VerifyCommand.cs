@@ -127,6 +127,8 @@ public class VerifyCommand : Command
             ProtocolNotice = notice,
             DeclaredProtocolVersion = GetDeclaredVersion(target),
             CheckedProtocolVersion = GetCheckedVersion(target),
+            ProtocolCommit = ProtocolReference.ShortCommit,
+            ProtocolCommitUrl = ProtocolReference.TreeUrl,
             RegisterSetVersion = CoreSchema.Version
         };
 

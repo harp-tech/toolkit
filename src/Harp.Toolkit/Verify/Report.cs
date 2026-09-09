@@ -12,6 +12,8 @@ public class Report
     public string ProtocolNotice { get; set; } = string.Empty;
     public string DeclaredProtocolVersion { get; set; } = string.Empty;
     public string CheckedProtocolVersion { get; set; } = string.Empty;
+    public string ProtocolCommit { get; set; } = string.Empty;
+    public string ProtocolCommitUrl { get; set; } = string.Empty;
     public string RegisterSetVersion { get; set; } = string.Empty;
     public List<SuiteResult> Suites { get; set; } = new();
 }
