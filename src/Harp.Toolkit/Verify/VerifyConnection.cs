@@ -14,7 +14,7 @@ public sealed class VerifyConnection : IDisposable
     const int ConnectDelayMilliseconds = 200;
     const int PortReleaseDelayMilliseconds = 300;
     const int OpenTimeoutMilliseconds = 10000;
-    const int IdentityReadTimeoutMilliseconds = 2000;
+    const int ReadTimeoutMilliseconds = 2000;
     const int ReadyAttempts = 5;
     const int ReadyTimeoutMilliseconds = 1000;
 
@@ -77,7 +77,7 @@ public sealed class VerifyConnection : IDisposable
         while (true)
         {
             using var readTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            readTimeout.CancelAfter(IdentityReadTimeoutMilliseconds);
+            readTimeout.CancelAfter(ReadTimeoutMilliseconds);
             try
             {
                 using var probe = new AsyncDevice(portName);
@@ -118,8 +118,14 @@ public sealed class VerifyConnection : IDisposable
     /// </summary>
     public void Write(HarpMessage message) => requests.OnNext(message);
 
+    /// <summary>
+    /// Sends the specified request and awaits the matching reply, failing with a
+    /// <see cref="TimeoutException"/> if the device does not answer in time.
+    /// </summary>
     public async Task<HarpMessage> CommandAsync(HarpMessage command, CancellationToken cancellationToken = default)
     {
+        using var replyTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        replyTimeout.CancelAfter(ReadTimeoutMilliseconds);
         var reply = messages.FirstAsync(message =>
         {
             var match = message.IsMatch(command.Address, command.MessageType);
@@ -129,10 +135,19 @@ public sealed class VerifyConnection : IDisposable
             }
 
             return match;
-        }).RunAsync(cancellationToken);
+        }).RunAsync(replyTimeout.Token);
 
         Write(command);
-        return await reply;
+        try
+        {
+            return await reply;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException(
+                $"The device did not reply to a {command.MessageType} request at address " +
+                $"{command.Address} within {ReadTimeoutMilliseconds} ms.");
+        }
     }
 
     /// <summary>
@@ -248,16 +263,30 @@ public sealed class VerifyConnection : IDisposable
         return new DeviceIdentity(WhoAmI, name, hardwareVersion, firmwareVersion);
     }
 
+    /// <summary>
+    /// Reads the protocol version the device declares, leaving it undeclared when the version
+    /// register is unreadable, carries an unexpected length, or reports all zeros.
+    /// </summary>
+    internal async Task<Suites.SemanticVersion?> ReadProtocolVersionAsync(CancellationToken cancellationToken = default)
+    {
+        var reply = await TryReadAsync(
+            token => CommandAsync(HarpCommand.ReadByte(Suites.Version.Address), token),
+            cancellationToken);
+        if (reply is null || reply.GetPayloadArray<byte>().Length != Suites.Version.RegisterLength)
+            return null;
+
+        var protocolVersion = Suites.Version.GetPayload(reply).ProtocolVersion;
+        return protocolVersion.Major == 0 ? null : protocolVersion;
+    }
+
     static async Task<T?> TryReadAsync<T>(
         Func<CancellationToken, Task<T>> read,
         CancellationToken cancellationToken)
         where T : class
     {
-        using var readTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        readTimeout.CancelAfter(IdentityReadTimeoutMilliseconds);
         try
         {
-            return await read(readTimeout.Token);
+            return await read(cancellationToken);
         }
         catch (Exception) when (!cancellationToken.IsCancellationRequested)
         {

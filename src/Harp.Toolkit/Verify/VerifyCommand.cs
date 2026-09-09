@@ -102,7 +102,8 @@ public class VerifyCommand : Command
 
         using var connection = await VerifyConnection.OpenAsync(portName, cancellationToken);
         var identity = await connection.ReadDeviceIdentityAsync(cancellationToken);
-        var target = await ProtocolTarget.ResolveAsync(connection, prerelease, cancellationToken);
+        var declaredVersion = await connection.ReadProtocolVersionAsync(cancellationToken);
+        var target = new ProtocolTarget(declaredVersion, prerelease);
         var runner = new CoreRunner(target.IncludePrerelease, clockOptions, deviceMetadata, deviceRawYaml);
         var notice = GetProtocolNotice(target, runner.PrereleaseTestCount);
 
