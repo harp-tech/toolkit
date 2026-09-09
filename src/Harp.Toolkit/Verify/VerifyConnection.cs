@@ -1,4 +1,5 @@
-﻿using System.Reactive.Linq;
+﻿using System.Diagnostics;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Bonsai.Harp;
 
@@ -12,7 +13,7 @@ public sealed class VerifyConnection : IDisposable
     const int ConnectDelayMilliseconds = 200;
     const int PortReleaseDelayMilliseconds = 300;
     const int OpenTimeoutMilliseconds = 10000;
-    const int OpenRetryDelayMilliseconds = 250;
+    const int IdentityReadTimeoutMilliseconds = 2000;
     const int ReadyAttempts = 5;
     const int ReadyTimeoutMilliseconds = 1000;
 
@@ -22,7 +23,13 @@ public sealed class VerifyConnection : IDisposable
 
     VerifyConnection(string portName, int whoAmI)
     {
-        var device = new Bonsai.Harp.Device(whoAmI) { PortName = portName, IgnoreErrors = true };
+        var device = new Bonsai.Harp.Device(whoAmI)
+        {
+            PortName = portName,
+            IgnoreErrors = true,
+            OperationMode = OperationMode.Standby,
+            DumpRegisters = false,
+        };
         messages = device.Generate(requests).Publish();
         subscription = messages.Connect();
     }
@@ -34,10 +41,10 @@ public sealed class VerifyConnection : IDisposable
     /// </summary>
     public static async Task<VerifyConnection> OpenAsync(string portName, CancellationToken cancellationToken = default)
     {
-        var deadline = Environment.TickCount64 + OpenTimeoutMilliseconds;
-        var whoAmI = await ReadIdentityAsync(portName, deadline, cancellationToken);
+        var whoAmI = await ReadIdentityAsync(portName, cancellationToken);
         await Task.Delay(PortReleaseDelayMilliseconds, cancellationToken);
 
+        var retryStart = Stopwatch.GetTimestamp();
         while (true)
         {
             var connection = new VerifyConnection(portName, whoAmI);
@@ -46,10 +53,13 @@ public sealed class VerifyConnection : IDisposable
                 await connection.WaitUntilReadyAsync(cancellationToken);
                 return connection;
             }
-            catch (UnauthorizedAccessException) when (Environment.TickCount64 < deadline && !cancellationToken.IsCancellationRequested)
+            catch (Exception ex) when (
+                IsRetryableOpenFailure(ex) &&
+                IsWithinRetryBudget(retryStart) &&
+                !cancellationToken.IsCancellationRequested)
             {
                 connection.Dispose();
-                await Task.Delay(OpenRetryDelayMilliseconds, cancellationToken);
+                await Task.Delay(PortReleaseDelayMilliseconds, cancellationToken);
             }
             catch
             {
@@ -59,20 +69,36 @@ public sealed class VerifyConnection : IDisposable
         }
     }
 
-    static async Task<int> ReadIdentityAsync(string portName, long deadline, CancellationToken cancellationToken)
+    static async Task<int> ReadIdentityAsync(string portName, CancellationToken cancellationToken)
     {
+        var retryStart = Stopwatch.GetTimestamp();
         while (true)
         {
+            using var readTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            readTimeout.CancelAfter(IdentityReadTimeoutMilliseconds);
             try
             {
                 using var probe = new AsyncDevice(portName);
-                return await probe.ReadWhoAmIAsync(cancellationToken);
+                return await probe.ReadWhoAmIAsync(readTimeout.Token);
             }
-            catch (UnauthorizedAccessException) when (Environment.TickCount64 < deadline && !cancellationToken.IsCancellationRequested)
+            catch (Exception ex) when (
+                (IsRetryableOpenFailure(ex) || ex is OperationCanceledException) &&
+                IsWithinRetryBudget(retryStart) &&
+                !cancellationToken.IsCancellationRequested)
             {
-                await Task.Delay(OpenRetryDelayMilliseconds, cancellationToken);
+                await Task.Delay(PortReleaseDelayMilliseconds, cancellationToken);
             }
         }
+    }
+
+    static bool IsRetryableOpenFailure(Exception ex)
+    {
+        return ex is UnauthorizedAccessException || ex is IOException || ex is TimeoutException;
+    }
+
+    static bool IsWithinRetryBudget(long retryStart)
+    {
+        return Stopwatch.GetElapsedTime(retryStart).TotalMilliseconds < OpenTimeoutMilliseconds;
     }
 
     /// <summary>
