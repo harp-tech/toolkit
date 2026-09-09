@@ -54,6 +54,7 @@ internal class R_TIMESTAMP_SECOND : Suite
     [HarpTest(Description = "Validates that writing a past timestamp value takes effect and can be read back.")]
     public async Task<IResult> WritePastValueRoundTrip(VerifyConnection device)
     {
+        const long maximumElapsedSeconds = 1;
         var current = await device.ReadTimestampSecondsAsync();
         var tPast = current >= 10 ? current - 10 : 0u;
 
@@ -61,12 +62,13 @@ internal class R_TIMESTAMP_SECOND : Suite
         await Task.Delay(50);
 
         var readBack = await device.ReadTimestampSecondsAsync();
-        bool withinBounds = Math.Abs((long)readBack - (long)tPast) <= 1;
+        var elapsedSeconds = (long)readBack - tPast;
 
         return new AssertionResult(
-            withinBounds,
+            elapsedSeconds >= 0 && elapsedSeconds <= maximumElapsedSeconds,
             x => x
-                ? $"WritePastValueRoundTrip: wrote {tPast}, read back {readBack} (within 1s tolerance)."
-                : $"WritePastValueRoundTrip: wrote {tPast}, read back {readBack} (difference {Math.Abs((long)readBack - (long)tPast)}s, expected <= 1).");
+                ? $"Wrote {tPast} to TimestampSeconds and read it back as {readBack}."
+                : $"Wrote {tPast} to TimestampSeconds and read it back as {readBack}, "
+                    + $"outside the expected range of {tPast} to {tPast + maximumElapsedSeconds}.");
     }
 }

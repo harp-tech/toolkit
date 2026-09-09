@@ -5,7 +5,7 @@ namespace Harp.Toolkit.Verify.Suites;
 
 internal class RoundTripTestSuite : Suite
 {
-    public override string Description => "A bunch of tests to benchmark round trip read/writes.";
+    public override string Description => "Measures round trip latency statistics for a register read.";
 
     [HarpTest(Description = "Benchmarks the round trip time for a WhoAmI read command.")]
     public async Task<IResult> BenchmarkRoundTrip(VerifyConnection device)

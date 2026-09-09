@@ -62,7 +62,7 @@ internal class R_RESET_DEV : Suite
         if (provenance == BootProvenance)
             return "Both BOOT_DEF and BOOT_EE are set, so the reported boot provenance is contradictory.";
         if (provenance == 0)
-            return "Neither BOOT_DEF nor BOOT_EE is set, so no boot provenance is reported. A device without non-volatile memory must always set BOOT_DEF.";
+            return "Neither BOOT_DEF nor BOOT_EE is set, so no boot provenance is reported.";
 
         var commandBits = DescribeCommandBits(flags);
         if (commandBits.Length > 0)
