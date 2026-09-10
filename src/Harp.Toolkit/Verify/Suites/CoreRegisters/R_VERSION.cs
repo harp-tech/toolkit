@@ -38,6 +38,34 @@ internal class R_VERSION : Suite
                 : "Version register should NOT be writable.");
     }
 
+    [HarpTest(Description = "Validates that Version register declares the protocol major version being checked.", Prerelease = true)]
+    public async Task<IResult> AssertDeclaresCheckedMajorVersion(VerifyConnection device)
+    {
+        try
+        {
+            var reply = await device.CommandAsync(HarpCommand.ReadByte(Version.Address));
+            var payload = reply.GetPayloadArray<byte>();
+            if (payload.Length != Version.RegisterLength)
+            {
+                return new AssertionResult(
+                    false,
+                    $"Version returned {payload.Length} bytes, expected {Version.RegisterLength}.");
+            }
+
+            var declared = Version.GetPayload(reply).ProtocolVersion;
+            return new AssertionResult(
+                declared.Major == ProtocolReference.PrereleaseMajorVersion,
+                x => x
+                    ? $"Version declares protocol {declared}, matching the major version being checked."
+                    : $"Version declares protocol {declared}, but these checks are against major "
+                        + $"version {ProtocolReference.PrereleaseMajorVersion}.");
+        }
+        catch (Exception ex)
+        {
+            return new ErrorResult(ex);
+        }
+    }
+
     [HarpTest(Description = "Reports the version information declared by the device.", Prerelease = true)]
     public async Task<IResult> ReportVersionInformation(VerifyConnection device)
     {

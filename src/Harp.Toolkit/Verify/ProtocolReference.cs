@@ -11,6 +11,11 @@ internal static class ProtocolReference
     public const string Commit = "11b584bdd2eb45a8b55ebc540512864ff0667326";
 
     /// <summary>
+    /// The major protocol version that specification text targets.
+    /// </summary>
+    public const int PrereleaseMajorVersion = 2;
+
+    /// <summary>
     /// Gets the abbreviated commit, for display where a link carries the full reference.
     /// </summary>
     public static string ShortCommit => Commit[..7];

@@ -11,19 +11,17 @@ internal enum ProtocolScope
 
 internal readonly record struct ProtocolTarget(SemanticVersion? DeclaredVersion, bool PrereleaseRequested)
 {
-    const int PrereleaseMajorVersion = 2;
-
     public ProtocolScope Scope
     {
         get
         {
             var major = DeclaredVersion.HasValue ? DeclaredVersion.GetValueOrDefault().Major : 0;
-            if (major > PrereleaseMajorVersion)
+            if (major > ProtocolReference.PrereleaseMajorVersion)
                 return ProtocolScope.Unsupported;
 
-            return major == PrereleaseMajorVersion ? ProtocolScope.V2 : ProtocolScope.V1;
+            return major == ProtocolReference.PrereleaseMajorVersion ? ProtocolScope.V2 : ProtocolScope.V1;
         }
     }
 
-    public bool IncludePrerelease => Scope == ProtocolScope.V2 && PrereleaseRequested;
+    public bool IncludePrerelease => PrereleaseRequested;
 }

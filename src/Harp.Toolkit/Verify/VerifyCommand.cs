@@ -236,7 +236,7 @@ public class VerifyCommand : Command
 
     static string DescribeProtocolSelection(ProtocolTarget target)
     {
-        if (target.IncludePrerelease)
+        if (target.IncludePrerelease && target.Scope == ProtocolScope.V2)
         {
             return $"Checking against protocol version [bold]{GetDeclaredVersion(target)}[/], " +
                 "which is not yet ratified.";
@@ -249,39 +249,45 @@ public class VerifyCommand : Command
     static string GetCheckedVersion(ProtocolTarget target)
     {
         if (target.IncludePrerelease)
-            return $"{GetDeclaredVersion(target)}, which is not yet ratified";
+            return $"v{ProtocolReference.PrereleaseMajorVersion}, which is not yet ratified";
 
-        return target.Scope == ProtocolScope.V2
-            ? "v1, since v2 is not yet ratified"
-            : "v1";
+        return target.Scope == ProtocolScope.V1
+            ? "v1"
+            : $"v1, since v{ProtocolReference.PrereleaseMajorVersion} is not yet ratified";
     }
 
     static string GetProtocolNotice(ProtocolTarget target, int count)
     {
+        if (target.IncludePrerelease)
+        {
+            if (target.Scope == ProtocolScope.V2)
+                return $"Including {count} prerelease checks, which this device declares support for.";
+
+            return $"Including {count} prerelease checks against protocol " +
+                $"v{ProtocolReference.PrereleaseMajorVersion}, which this device does not declare.";
+        }
+
         if (target.Scope == ProtocolScope.Unsupported)
         {
             return $"This device declares protocol {GetDeclaredVersion(target)}, which this toolkit " +
-                "does not cover. The results below are against the v1 baseline only.";
+                $"does not cover, so only the v1 baseline applies. {GetRerunHint(count)}".TrimEnd();
         }
 
-        if (target.Scope == ProtocolScope.V1)
+        if (!target.DeclaredVersion.HasValue)
         {
-            if (target.DeclaredVersion.HasValue)
-                return $"This device declares protocol {GetDeclaredVersion(target)}, so only the v1 baseline applies.";
-
-            var recommendation = "Updating to a firmware that implements R_VERSION would let it be " +
-                "verified against the current protocol.";
-            return target.PrereleaseRequested
-                ? $"This device declares no protocol version, so --prerelease had no effect. {recommendation}"
-                : $"This device declares no protocol version. {recommendation}";
+            return "This device declares no protocol version, so only the v1 baseline applies. " +
+                $"Implementing R_VERSION is the first step of a v{ProtocolReference.PrereleaseMajorVersion} " +
+                $"migration. {GetRerunHint(count)}".TrimEnd();
         }
 
-        if (count == 0)
-            return string.Empty;
+        return GetRerunHint(count);
+    }
 
-        return target.PrereleaseRequested
-            ? $"Including {count} prerelease checks, which this device declares support for."
-            : $"{count} prerelease checks were not run. Rerun with --prerelease to include them.";
+    static string GetRerunHint(int count)
+    {
+        return count > 0
+            ? $"{count} prerelease checks were not run. Rerun with --prerelease to include them."
+            : string.Empty;
     }
 
     static string GetResultMarkup(IResult result)
