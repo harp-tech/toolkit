@@ -35,14 +35,14 @@ Prints a detailed result for every check once the run finishes, including the st
 
 Harp devices do not all implement the same revision of the standard, so no single set of checks applies to every device.
 
-A device declares the revision it implements in `R_VERSION`. Where that register is absent, unreadable or reads all zeros, the device is held to v1, since a device that predates the register also predates the version field. Checks belonging to a revision outside that scope are neither run nor listed. A skipped result means a check that was in scope and did not run. The console and the report state how many checks were excluded.
+A device declares the revision it implements in `R_VERSION`. Where that register is absent, unreadable or reads all zeros, the device is held to v1, since a device that predates the register also predates the version field. By default, checks belonging to a revision outside that scope are neither run nor listed. A skipped result means a check that was in scope and did not run. The console and the report state how many checks were excluded.
 
 #### Include prerelease checks
 ```ps1
 --prerelease
 ```
 
-Also runs the checks that encode specification text outside the stable baseline. Those checks apply only to a device declaring the matching major version, so supplying the option for a device that declares v1 changes nothing. A failure reported under this option may reflect text that is still being ratified, which makes it worth checking intent carefully against the specification.
+Also runs the checks against the next specification revision, which is not yet ratified, regardless of the declared version. For a device that does not declare that revision, failures among them show what the revision would require rather than defects against its own declared version. A failure here is worth checking carefully against the specification before it is treated as a device defect.
 
 ## Sharing a report
 
