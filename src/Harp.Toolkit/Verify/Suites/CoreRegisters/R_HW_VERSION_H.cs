@@ -1,0 +1,20 @@
+﻿using Bonsai.Harp;
+
+namespace Harp.Toolkit.Verify.Suites;
+
+internal class R_HW_VERSION_H : Suite
+{
+    public override string Description => "Hardware Version High Register Tests";
+
+    [HarpTest(Description = "Validates that HwVersionHigh matches byte 6 of R_VERSION.", Prerelease = true)]
+    public async Task<IResult> AssertConsistentWithVersion(VerifyConnection device)
+    {
+        var versionArray = await device.ReadByteArrayAsync(Version.Address);
+        var registerValue = await device.ReadByteAsync(HardwareVersionHigh.Address);
+        return new AssertionResult(
+            registerValue == versionArray[6],
+            x => x
+                ? $"HwVersionHigh (0x{registerValue:X2}) matches R_VERSION byte 6."
+                : $"HwVersionHigh (0x{registerValue:X2}) does not match R_VERSION byte 6 (0x{versionArray[6]:X2}).");
+    }
+}

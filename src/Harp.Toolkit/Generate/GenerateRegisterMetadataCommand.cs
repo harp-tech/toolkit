@@ -3,8 +3,6 @@ using System.Data;
 using Bonsai.Harp;
 using ExcelDataReader;
 using Harp.Generators;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace Harp.Toolkit.Generate;
 
@@ -16,10 +14,10 @@ class GenerateRegisterMetadataCommand : Command
         OutputPathOption outputPathOption = new();
         Argument<FileInfo> registerWorksheetPathArgument = ArgumentValidation.AcceptExistingOnly(
             new Argument<FileInfo>("registers.xls")
-        {
-            Description = "The path to the file describing the device registers.",
-            Arity = ArgumentArity.ExactlyOne
-        });
+            {
+                Description = "The path to the file describing the device registers.",
+                Arity = ArgumentArity.ExactlyOne
+            });
 
         Arguments.Add(registerWorksheetPathArgument);
         Options.Add(outputPathOption);

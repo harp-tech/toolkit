@@ -1,6 +1,7 @@
 ﻿using System.CommandLine;
 using Bonsai.Harp;
 using Harp.Toolkit.Generate;
+using Harp.Toolkit.Verify;
 
 namespace Harp.Toolkit;
 
@@ -16,6 +17,7 @@ internal class Program
         rootCommand.Subcommands.Add(new ListCommand());
         rootCommand.Subcommands.Add(new UpdateFirmwareCommand());
         rootCommand.Subcommands.Add(new GenerateCommand());
+        rootCommand.Subcommands.Add(new VerifyCommand());
         rootCommand.SetAction(async parseResult =>
         {
             var portName = parseResult.GetRequiredValue(portNameOption);
