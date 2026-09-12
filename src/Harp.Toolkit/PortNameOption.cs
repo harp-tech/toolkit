@@ -2,12 +2,10 @@
 
 namespace Harp.Toolkit;
 
-public class PortNameOption : Option<string>
+public abstract class PortNameOption : Option<string>
 {
-    public PortNameOption()
-        : base("--port")
+    protected PortNameOption(string name)
+        : base(name)
     {
-        Description = "Specifies the name of the serial port used to communicate with the device.";
-        Required = true;
     }
 }
