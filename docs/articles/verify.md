@@ -2,7 +2,7 @@
 
 `harp.toolkit` can check a device against the Harp specification and report where its behavior departs from what the standard requires. The checks span all three specification documents, covering the core register set and its access rules, the reply behavior required by the binary protocol, and alignment on the synchronization clock. Results print to the console as the run proceeds, and can be written to a shareable HTML report.
 
-A verification result records how a device behaved against a stated revision of the specification, and it confers no compliance status.
+A verification result records how a device behaved against a stated version of the specification, and it confers no compliance status.
 
 > [!Warning]
 > Verification writes to device registers. Conformance cannot be established without exercising writes, read-only enforcement and event streams, so there is no read-only mode. Some checks leave the device clock and the operation control register in a changed state, and the run assumes a freshly powered device. Avoid verifying a device that is part of a running experiment.
@@ -15,7 +15,7 @@ A verification needs only the serial port of the device.
 dotnet harp.toolkit verify --port COM3
 ```
 
-Every check reports as passed, failed or skipped. A check is skipped when it needs an option that was not supplied, and the message names the option. A device that stops answering fails the check that was waiting on it, after a fixed 2000 ms, so a silent register costs one result rather than stalling the rest of the run.
+Every check reports as passed, failed, skipped or error. A failed check ran to completion and the device did not behave as required by the specification. An error means the check could not be completed at all, which happens when the device replies with an error or stays silent. A check is skipped when it needs an option that was not supplied, and the message names the option. A silent register costs one result after a fixed 2000 ms, instead of stalling the rest of the run.
 
 #### Serial port
 ```ps1
@@ -31,18 +31,22 @@ Specifies the name of the serial port used to communicate with the device. This 
 
 Prints a detailed result for every check once the run finishes, including the statistics gathered by the measurements. Per-check progress is printed either way.
 
+### Exit code
+
+The command exits 1 if any check failed or ended in error, and 0 otherwise. Skipped checks do not affect the result, so a run that skips every optional check still exits 0. A run that cannot start also exits 1, for example when the named serial port is not present.
+
 ## Specification version
 
-Harp devices do not all implement the same revision of the standard, so no single set of checks applies to every device.
+Harp devices do not all implement the same version of the standard, so no single set of checks applies to every device.
 
-A device declares the revision it implements in `R_VERSION`. Where that register is absent, unreadable or reads all zeros, the device is held to v1, since a device that predates the register also predates the version field. By default, checks belonging to a revision outside that scope are neither run nor listed. A skipped result means a check that was in scope and did not run. The console and the report state how many checks were excluded.
+A device declares the version it implements in `R_VERSION`. Where that register is absent, unreadable or reads all zeros, the device is held to v1, since a device that predates the register also predates the version field. By default, checks belonging to a version outside that scope are neither run nor listed. A skipped result means a check that was in scope and did not run. The console and the report state how many checks were excluded.
 
 #### Include prerelease checks
 ```ps1
 --prerelease
 ```
 
-Also runs the checks against the next specification revision, which is not yet ratified, regardless of the declared version. For a device that does not declare that revision, failures among them show what the revision would require rather than defects against its own declared version. A failure here is worth checking carefully against the specification before it is treated as a device defect.
+Also runs the checks against the next specification revision, which is not yet ratified, regardless of the declared version. For a device that has not declared the next version, failures among them show what that version would require rather than defects against its own declared version. A failure here is worth checking carefully against the specification before it is treated as a device defect.
 
 ## Sharing a report
 
@@ -58,9 +62,9 @@ The report is titled with the device name and opens with a header describing the
 - **Serial port** is the port used to reach the device.
 - **Hardware version** and **Firmware version** are read from the device at startup, and read as not reported for a device that does not answer them.
 - **Protocol version declared** is what the device reports in `R_VERSION`, or that no version was declared.
-- **Checked against** is the revision of the specification used to verify the device, together with the reason when that is narrower than what the device declared.
-- **Specification** links to the specification documents as they stood at the commit behind the checks.
-- **Register set** names the generator package supplying the core register metadata, which fully determines the register set the run expects.
+- **Checked against** is the version of the specification used to verify the device, together with the reason when that is narrower than the version declared by the device.
+- **Specification** links to the specification documents as they stood at the revision behind the checks.
+- **Register set** names the generator package supplying the core register metadata, which fully determines the register set expected by the run.
 
 #### Report path
 ```ps1
@@ -108,7 +112,7 @@ Number of pulse event pairs to collect for the alignment check. The default is 5
 
 ## Verifying the declared interface
 
-A device can also be checked against its own declared interface rather than only against the standard. Supplying the device metadata generates an interface from it, reads every declared register from the live device, and parses each reply with the generated parsers. The identity, firmware and hardware versions declared in the metadata are cross-checked against what the device reports.
+A device can also be checked against its own declared interface rather than only against the standard. Supplying the device metadata generates an interface from it, reads every declared register from the live device, and parses each reply with the generated parsers. The identity, firmware and hardware versions declared in the metadata are cross-checked against the values reported by the device.
 
 ```ps1
 dotnet harp.toolkit verify --port COM3 --metadata device.yml

@@ -95,7 +95,7 @@ public sealed class VerifyConnection : IDisposable
 
     static bool IsRetryableOpenFailure(Exception ex)
     {
-        return ex is UnauthorizedAccessException || ex is IOException || ex is TimeoutException;
+        return ex is UnauthorizedAccessException || ex is IOException and not FileNotFoundException || ex is TimeoutException;
     }
 
     static bool IsWithinRetryBudget(long retryStart)

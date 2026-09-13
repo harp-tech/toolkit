@@ -10,7 +10,7 @@ public class VerifyCommand : Command
     public VerifyCommand()
         : base("verify", "Verify device conformance against the Harp specification.")
     {
-        PortNameOption portNameOption = new();
+        DevicePortNameOption portNameOption = new();
         Option<FileInfo?> fileOption = new("--report")
         {
             Description = "Path to the HTML report generated after running tests.",
@@ -29,11 +29,7 @@ public class VerifyCommand : Command
             Required = false,
         };
 
-        Option<string?> clockPortOption = new("--clock-port")
-        {
-            Description = "Serial port of the reference clock device. Enables clock alignment tests.",
-            Required = false,
-        };
+        ClockPortNameOption clockPortOption = new();
 
         Option<int?> ppsEventOption = new("--pps-event")
         {
@@ -80,11 +76,12 @@ public class VerifyCommand : Command
                 PpsEvent: parsedResult.GetValue(ppsEventOption),
                 ClockSamples: parsedResult.GetValue(clockSamplesOption));
             FileInfo? metadataPath = parsedResult.GetValue(metadataOption);
-            return RunVerification(portName, reportFile, verbose, prerelease, clockOptions, metadataPath, CancellationToken.None);
+            return portNameOption.ReportErrorsAsync(portName, () => RunVerification(
+                portName, reportFile, verbose, prerelease, clockOptions, metadataPath, CancellationToken.None));
         });
     }
 
-    static async Task RunVerification(string portName, FileInfo? reportFile, bool verbose, bool prerelease, ClockTestOptions? clockOptions, FileInfo? metadataPath, CancellationToken cancellationToken)
+    static async Task<int> RunVerification(string portName, FileInfo? reportFile, bool verbose, bool prerelease, ClockTestOptions? clockOptions, FileInfo? metadataPath, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine($"Running tests on [bold]{portName}[/]...");
         if (clockOptions is not null)
@@ -217,6 +214,11 @@ public class VerifyCommand : Command
             await File.WriteAllTextAsync(fileName, html, cancellationToken);
             AnsiConsole.MarkupLine($"[green]Done![/] Report generated: [link]{fileName}[/]");
         }
+
+        var failedCount = report.Suites
+            .SelectMany(suite => suite.Results)
+            .Count(result => result.Result.Status is Status.Failed or Status.Error);
+        return failedCount > 0 ? 1 : 0;
     }
 
     static string GetDeclaredVersion(ProtocolTarget target)

@@ -8,7 +8,7 @@ public class UpdateFirmwareCommand : Command
     public UpdateFirmwareCommand()
         : base("update", "Update the device firmware from a local HEX file.")
     {
-        PortNameOption portNameOption = new();
+        DevicePortNameOption portNameOption = new();
         Option<FileInfo> firmwarePathOption = new("--path")
         {
             Description = "Specifies the path of the firmware file to write to the device.",
@@ -23,7 +23,7 @@ public class UpdateFirmwareCommand : Command
         Options.Add(portNameOption);
         Options.Add(firmwarePathOption);
         Options.Add(forceUpdateOption);
-        SetAction(async parseResult =>
+        SetAction(parseResult =>
         {
             var firmwarePath = parseResult.GetRequiredValue(firmwarePathOption);
             var portName = parseResult.GetRequiredValue(portNameOption);
@@ -31,13 +31,16 @@ public class UpdateFirmwareCommand : Command
 
             var firmware = DeviceFirmware.FromFile(firmwarePath.FullName);
             Console.WriteLine($"{firmware.Metadata}");
-            ProgressBar.Write(0);
-            try
+            return portNameOption.ReportErrorsAsync(portName, async () =>
             {
-                var progress = new Progress<int>(ProgressBar.Update);
-                await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate, progress);
-            }
-            finally { Console.WriteLine(); }
+                ProgressBar.Write(0);
+                try
+                {
+                    var progress = new Progress<int>(ProgressBar.Update);
+                    await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate, progress);
+                }
+                finally { Console.WriteLine(); }
+            });
         });
     }
 }
