@@ -6,9 +6,14 @@ internal class R_TIMESTAMP_SECOND : Suite
 {
     public override string Description => "Timestamp Seconds Register Tests";
 
+    const string ClockLockedMessage = "The timestamp register is locked (CLK_LOCK), so the device correctly refuses writes.";
+
     [HarpTest(Description = "Validates that the Timestamp Seconds register is writable.")]
     public async Task<IResult> IsWritable(VerifyConnection device)
     {
+        if (await IsClockLockedAsync(device))
+            return new Result<bool>(false, Status.Skipped, ClockLockedMessage);
+
         const uint setSeconds = 42;
         const double maximumElapsedSeconds = 2.0;
         await device.WriteTimestampSecondsAsync(setSeconds);
@@ -54,6 +59,9 @@ internal class R_TIMESTAMP_SECOND : Suite
     [HarpTest(Description = "Validates that writing a past timestamp value takes effect and can be read back.")]
     public async Task<IResult> WritePastValueRoundTrip(VerifyConnection device)
     {
+        if (await IsClockLockedAsync(device))
+            return new Result<bool>(false, Status.Skipped, ClockLockedMessage);
+
         const long maximumElapsedSeconds = 1;
         var current = await device.ReadTimestampSecondsAsync();
         var tPast = current >= 10 ? current - 10 : 0u;
@@ -70,5 +78,18 @@ internal class R_TIMESTAMP_SECOND : Suite
                 ? $"Wrote {tPast} to TimestampSeconds and read it back as {readBack}."
                 : $"Wrote {tPast} to TimestampSeconds and read it back as {readBack}, "
                     + $"outside the expected range of {tPast} to {tPast + maximumElapsedSeconds}.");
+    }
+
+    static async Task<bool> IsClockLockedAsync(VerifyConnection device)
+    {
+        try
+        {
+            var configuration = (ClockConfigurationFlags)await device.ReadByteAsync(ClockConfiguration.Address);
+            return configuration.HasFlag(ClockConfigurationFlags.ClockLock);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
     }
 }
