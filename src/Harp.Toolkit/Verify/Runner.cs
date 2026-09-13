@@ -27,6 +27,11 @@ public class Runner
         {
             await foreach (var result in suite.RunAllAsync(connection, includePrerelease, cancellationToken, (testName, testDesc) => onTestStart?.Invoke(suite, testName, testDesc)))
             {
+                if (result.Result is ErrorResult { Exception: TimeoutException timeout })
+                {
+                    throw timeout;
+                }
+
                 yield return (suite, result);
             }
         }

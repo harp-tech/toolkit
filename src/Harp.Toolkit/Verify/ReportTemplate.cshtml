@@ -54,6 +54,13 @@
             </div>
         </div>
 
+        @if (Model.AbortReason.Length > 0)
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>Verification incomplete.</strong> @Model.AbortReason
+            </div>
+        }
+
         @if (Model.ProtocolNotice.Length > 0)
         {
             <div class="alert @(Model.IncludePrerelease ? "alert-info" : "alert-warning")" role="alert">

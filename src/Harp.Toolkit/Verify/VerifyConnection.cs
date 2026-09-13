@@ -288,7 +288,7 @@ public sealed class VerifyConnection : IDisposable
         {
             return await read(cancellationToken);
         }
-        catch (Exception) when (!cancellationToken.IsCancellationRequested)
+        catch (Exception ex) when (ex is not TimeoutException && !cancellationToken.IsCancellationRequested)
         {
             return null;
         }

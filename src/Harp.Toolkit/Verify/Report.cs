@@ -10,6 +10,7 @@ public class Report
     public DateTime RunDate { get; set; } = DateTime.Now;
     public bool IncludePrerelease { get; set; }
     public string ProtocolNotice { get; set; } = string.Empty;
+    public string AbortReason { get; set; } = string.Empty;
     public string DeclaredProtocolVersion { get; set; } = string.Empty;
     public string CheckedProtocolVersion { get; set; } = string.Empty;
     public string ProtocolCommit { get; set; } = string.Empty;
