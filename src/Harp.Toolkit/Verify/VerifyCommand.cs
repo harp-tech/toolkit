@@ -130,30 +130,40 @@ public class VerifyCommand : Command
         };
 
         int currentTest = 0;
-        await foreach (var (suite, result) in runner.RunAllAsync(connection, cancellationToken, (suite, testName, testDesc) =>
+        try
         {
-            // Print "Running" status before test execution (without newline)
-            currentTest++;
-            if (!Console.IsOutputRedirected)
-                Console.Write($"({currentTest}/{runner.TestCount}) {suite.GetType().Name}::{testName} .... Running...");
-        }))
+            await foreach (var (suite, result) in runner.RunAllAsync(connection, cancellationToken, (suite, testName, testDesc) =>
+            {
+                // Print "Running" status before test execution (without newline)
+                currentTest++;
+                if (!Console.IsOutputRedirected)
+                    Console.Write($"({currentTest}/{runner.TestCount}) {suite.GetType().Name}::{testName} .... Running...");
+            }))
+            {
+                // Clear the line by moving cursor to start and overwriting with spaces, then print result
+                if (!Console.IsOutputRedirected)
+                    Console.Write($"\r{new string(' ', Console.WindowWidth - 1)}\r");
+                AnsiConsole.MarkupLine($"[grey]({currentTest}/{runner.TestCount}) {suite.GetType().Name}::{result.Name}[/] .... {GetResultMarkup(result.Result)}");
+
+                var suiteResult = report.Suites.FirstOrDefault(s => s.Name == suite.GetType().Name);
+                if (suiteResult == null)
+                {
+                    suiteResult = new SuiteResult
+                    {
+                        Name = suite.GetType().Name,
+                        Description = suite.Description
+                    };
+                    report.Suites.Add(suiteResult);
+                }
+                suiteResult.Results.Add(result);
+            }
+        }
+        catch (TimeoutException ex)
         {
-            // Clear the line by moving cursor to start and overwriting with spaces, then print result
             if (!Console.IsOutputRedirected)
                 Console.Write($"\r{new string(' ', Console.WindowWidth - 1)}\r");
-            AnsiConsole.MarkupLine($"[grey]({currentTest}/{runner.TestCount}) {suite.GetType().Name}::{result.Name}[/] .... {GetResultMarkup(result.Result)}");
-
-            var suiteResult = report.Suites.FirstOrDefault(s => s.Name == suite.GetType().Name);
-            if (suiteResult == null)
-            {
-                suiteResult = new SuiteResult
-                {
-                    Name = suite.GetType().Name,
-                    Description = suite.Description
-                };
-                report.Suites.Add(suiteResult);
-            }
-            suiteResult.Results.Add(result);
+            report.AbortReason = DescribeAbort(ex, currentTest, runner.TestCount);
+            AnsiConsole.MarkupLine($"[red]{Markup.Escape(report.AbortReason)}[/]");
         }
 
         if (verbose)
@@ -215,10 +225,19 @@ public class VerifyCommand : Command
             AnsiConsole.MarkupLine($"[green]Done![/] Report generated: [link]{fileName}[/]");
         }
 
+        if (report.AbortReason.Length > 0)
+            return 1;
+
         var failedCount = report.Suites
             .SelectMany(suite => suite.Results)
             .Count(result => result.Result.Status is Status.Failed or Status.Error);
         return failedCount > 0 ? 1 : 0;
+    }
+
+    static string DescribeAbort(TimeoutException exception, int completedCount, int testCount)
+    {
+        return $"{exception.Message} Verification stopped after {completedCount} of {testCount} checks. " +
+            "Rerun the verification once the device and the connection are stable.";
     }
 
     static string GetDeclaredVersion(ProtocolTarget target)

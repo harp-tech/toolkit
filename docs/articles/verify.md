@@ -15,7 +15,9 @@ A verification needs only the serial port of the device.
 dotnet harp.toolkit verify --port COM3
 ```
 
-Every check reports as passed, failed, skipped or error. A failed check ran to completion and the device did not behave as required by the specification. An error means the check could not be completed at all, which happens when the device replies with an error or stays silent. A check is skipped when it needs an option that was not supplied, and the message names the option. A silent register costs one result after a fixed 2000 ms, instead of stalling the rest of the run.
+Every check reports as passed, failed, skipped or error. A failed check ran to completion and the device did not behave as required by the specification. An error means the check could not be completed at all, which happens when the device replies with an error. A check is skipped when it needs an option that was not supplied, and the message names the option.
+
+Verification stops at the first request left unanswered for 2000 ms, since a late reply can be matched to a later check, and the console states where the run stopped. The HTML report is still written when `--report` is supplied, and states that the verification is incomplete.
 
 #### Serial port
 ```ps1
@@ -33,7 +35,7 @@ Prints a detailed result for every check once the run finishes, including the st
 
 ### Exit code
 
-The command exits 1 if any check failed or ended in error, and 0 otherwise. Skipped checks do not affect the result, so a run that skips every optional check still exits 0. A run that cannot start also exits 1, for example when the named serial port is not present.
+The command exits 1 if any check failed or ended in error, and 0 otherwise. Skipped checks do not affect the result, so a run that skips every optional check still exits 0. A run that cannot start or continue also exits 1, for example when the named serial port is not present or the device stops responding.
 
 ## Specification version
 
