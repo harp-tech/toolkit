@@ -5,7 +5,7 @@
 A verification result records how a device behaved against a stated version of the specification, and it confers no compliance status.
 
 > [!Warning]
-> Verification writes to device registers. Conformance cannot be established without exercising writes, read-only enforcement and event streams, so there is no read-only mode. Some checks leave the device clock and the operation control register in a changed state, and the run assumes a freshly powered device. Avoid verifying a device that is part of a running experiment.
+> Verification writes to device registers. Conformance cannot be established without exercising writes, read-only enforcement and event streams, so there is no read-only mode. Some checks leave the device clock and the operation control register in a changed state, and the run assumes a freshly powered device. An interrupted run can also leave the timestamp register locked until the device is power cycled. Avoid verifying a device that is part of a running experiment.
 
 ## Running a verification
 
