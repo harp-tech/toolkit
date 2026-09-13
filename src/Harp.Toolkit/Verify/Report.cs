@@ -16,5 +16,6 @@ public class Report
     public string ProtocolCommit { get; set; } = string.Empty;
     public string ProtocolCommitUrl { get; set; } = string.Empty;
     public string RegisterSetVersion { get; set; } = string.Empty;
+    public string ToolkitVersion { get; set; } = string.Empty;
     public List<SuiteResult> Suites { get; set; } = new();
 }

@@ -1,4 +1,5 @@
 ﻿using System.CommandLine;
+using System.Reflection;
 using Spectre.Console;
 using Harp.Generators;
 using Harp.Toolkit.Verify.Suites;
@@ -126,7 +127,8 @@ public class VerifyCommand : Command
             CheckedProtocolVersion = GetCheckedVersion(target),
             ProtocolCommit = ProtocolReference.ShortCommit,
             ProtocolCommitUrl = ProtocolReference.TreeUrl,
-            RegisterSetVersion = CoreSchema.Version
+            RegisterSetVersion = CoreSchema.Version,
+            ToolkitVersion = GetToolkitVersion()
         };
 
         int currentTest = 0;
@@ -238,6 +240,14 @@ public class VerifyCommand : Command
     {
         return $"{exception.Message} Verification stopped after {completedCount} of {testCount} checks. " +
             "Rerun the verification once the device and the connection are stable.";
+    }
+
+    static string GetToolkitVersion()
+    {
+        var assembly = typeof(VerifyCommand).Assembly;
+        return assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? assembly.GetName().Version?.ToString()
+            ?? "not reported";
     }
 
     static string GetDeclaredVersion(ProtocolTarget target)
