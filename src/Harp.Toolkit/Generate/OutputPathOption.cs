@@ -7,7 +7,7 @@ public class OutputPathOption : Option<DirectoryInfo>
     public OutputPathOption()
         : base("-o", "--output")
     {
-        Description = "Location to place the generated output. The default is the current directory.";
-        DefaultValueFactory = _ => new DirectoryInfo(Environment.CurrentDirectory);
+        Description = "Location to place the generated output.";
+        DefaultValueFactory = _ => new DirectoryInfo(".");
     }
 }
