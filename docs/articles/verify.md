@@ -67,6 +67,7 @@ The report is titled with the device name and opens with a header describing the
 - **Checked against** is the version of the specification used to verify the device, together with the reason when that is narrower than the version declared by the device.
 - **Specification** links to the specification documents as they stood at the revision behind the checks.
 - **Register set** names the generator package supplying the core register metadata, which fully determines the register set expected by the run.
+- **Toolkit version** identifies the build of `harp.toolkit` that produced the report, including its source commit.
 
 #### Report path
 ```ps1
