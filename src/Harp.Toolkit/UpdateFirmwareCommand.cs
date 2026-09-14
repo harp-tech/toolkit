@@ -1,5 +1,6 @@
 ﻿using System.CommandLine;
 using Bonsai.Harp;
+using Spectre.Console;
 
 namespace Harp.Toolkit;
 
@@ -52,13 +53,13 @@ public class UpdateFirmwareCommand : Command
             Console.WriteLine($"{firmware.Metadata}");
             return portNameOption.ReportErrorsAsync(portName, async () =>
             {
-                ProgressBar.Write(0);
-                try
+                await AnsiConsole.Progress().StartAsync(async context =>
                 {
-                    var progress = new Progress<int>(ProgressBar.Update);
+                    var task = context.AddTask("Updating firmware");
+                    var progress = new ImmediateProgress<int>(percent => task.Value = percent);
                     await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate, progress);
-                }
-                finally { Console.WriteLine(); }
+                });
+                Console.WriteLine("Firmware updated.");
             });
         });
     }
