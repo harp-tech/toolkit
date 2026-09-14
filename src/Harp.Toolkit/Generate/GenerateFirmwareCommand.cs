@@ -14,7 +14,7 @@ class GenerateFirmwareCommand : Command
 
         Option<bool> generateImplementationOption = new("--implementation")
         {
-            Description = "Indicates whether to generate implementation (.c) files. The default is false."
+            Description = "Generate implementation (.c) files. The default is false."
         };
 
         Arguments.Add(metadataPathArgument);

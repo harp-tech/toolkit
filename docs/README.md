@@ -35,7 +35,7 @@ Tool for inspecting, updating and interfacing with Harp devices, with automatic 
 6. To update the device firmware from a local HEX file:
 
     ```cmd
-    dotnet harp.toolkit update --port COM4 --path Behavior-fw3.2-harp1.13-hw2.0-ass0.hex
+    dotnet harp.toolkit update --port COM4 Behavior-fw3.2-harp1.13-hw2.0-ass0.hex
     ```
 
 7. To restore the tool at any point, run:

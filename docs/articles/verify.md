@@ -24,7 +24,7 @@ Verification stops at the first request left unanswered for 2000 ms, since a lat
 --port <port>
 ```
 
-Specifies the name of the serial port used to communicate with the device. This option is required.
+Name of the serial port used to communicate with the device. This option is required.
 
 #### Detailed results
 ```ps1
@@ -74,7 +74,7 @@ The report is titled with the device name and opens with a header describing the
 --report <report>
 ```
 
-Path of the HTML report written after the run. Without it the results are printed and not saved.
+Path to the HTML report written after the run. Without it the results are printed and not saved.
 
 ### Acting on a reported failure
 
@@ -126,6 +126,6 @@ dotnet harp.toolkit verify --port COM3 --metadata device.yml
 --metadata <metadata>
 ```
 
-Path of the file describing the device registers. The file must exist.
+Path to the file describing the device registers. The file must exist.
 
 Unlike code generation, this option has no default, so a `device.yml` located in the current directory does not automatically enable these checks.
