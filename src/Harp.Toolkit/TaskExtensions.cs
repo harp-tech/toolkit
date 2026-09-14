@@ -6,7 +6,7 @@ static class TaskExtensions
     {
         if (await Task.WhenAny(task, Task.Delay(millisecondsDelay)) == task)
         {
-            return task.Result;
+            return await task;
         }
         else throw new TimeoutException("There was a timeout while awaiting the device response.");
     }

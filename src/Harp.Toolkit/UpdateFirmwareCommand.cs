@@ -1,6 +1,6 @@
 ﻿using System.CommandLine;
-using Bonsai.Harp;
 using Spectre.Console;
+using Harp.Toolkit.Firmware.ATxmega;
 
 namespace Harp.Toolkit;
 
