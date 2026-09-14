@@ -1,6 +1,4 @@
-﻿#nullable disable
-
-namespace Harp.Toolkit.Firmware.ATxmega;
+﻿namespace Harp.Toolkit.Firmware.ATxmega;
 
 /// <summary>
 /// Represents a hardware control firmware image which can be uploaded into a Harp device.

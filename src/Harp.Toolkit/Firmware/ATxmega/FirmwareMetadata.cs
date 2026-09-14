@@ -1,8 +1,7 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using Bonsai.Harp;
-
-#nullable disable
 
 namespace Harp.Toolkit.Firmware.ATxmega;
 
@@ -98,7 +97,7 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     /// <b>true</b> if the specified object is equal to the current metadata;
     /// otherwise, <b>false</b>.
     /// </returns>
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (obj is FirmwareMetadata version) return Equals(version);
         else return false;
@@ -112,7 +111,7 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     /// <b>true</b> if the specified metadata object is equal to the current metadata;
     /// otherwise, <b>false</b>.
     /// </returns>
-    public bool Equals(FirmwareMetadata other)
+    public bool Equals(FirmwareMetadata? other)
     {
         if (other is null) return false;
         return DeviceName == other.DeviceName &&
@@ -150,7 +149,7 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     /// <b>true</b> if the value on the left-hand side of the operator is equal
     /// to the value on the right-hand side; otherwise, <b>false</b>.
     /// </returns>
-    public static bool operator ==(FirmwareMetadata lhs, FirmwareMetadata rhs)
+    public static bool operator ==(FirmwareMetadata? lhs, FirmwareMetadata? rhs)
     {
         if (lhs is null) return rhs is null;
         else return lhs.Equals(rhs);
@@ -166,7 +165,7 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     /// <b>true</b> if the value on the left-hand side of the operator is not equal
     /// to the value on the right-hand side; otherwise, <b>false</b>.
     /// </returns>
-    public static bool operator !=(FirmwareMetadata lhs, FirmwareMetadata rhs)
+    public static bool operator !=(FirmwareMetadata? lhs, FirmwareMetadata? rhs)
     {
         if (lhs is null) return !(rhs is null);
         else return !lhs.Equals(rhs);
@@ -181,7 +180,7 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     public static FirmwareMetadata Parse(string input)
     {
         if (input == null) throw new ArgumentNullException(nameof(input));
-        if (!TryParse(input, out FirmwareMetadata result))
+        if (!TryParse(input, out var result))
         {
             throw new ArgumentException("Invalid Harp firmware metadata specification string.", nameof(input));
         }
@@ -200,7 +199,7 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     /// otherwise, contains <b>null</b>.
     /// </param>
     /// <returns><b>true</b> if the conversion was successful; otherwise, <b>false</b>.</returns>
-    public static bool TryParse(string input, out FirmwareMetadata metadata)
+    public static bool TryParse(string input, [NotNullWhen(true)] out FirmwareMetadata? metadata)
     {
         if (input == null) throw new ArgumentNullException(nameof(input));
         var match = MetadataRegex.Match(input);

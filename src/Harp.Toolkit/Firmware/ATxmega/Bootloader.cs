@@ -2,8 +2,6 @@
 using System.Reactive.Linq;
 using Bonsai.Harp;
 
-#nullable disable
-
 namespace Harp.Toolkit.Firmware.ATxmega;
 
 /// <summary>
@@ -32,7 +30,7 @@ public static class Bootloader
     /// <returns>
     /// The task object representing the asynchronous firmware update operation.
     /// </returns>
-    public static Task UpdateFirmwareAsync(string portName, DeviceFirmware firmware, IProgress<int> progress = default)
+    public static Task UpdateFirmwareAsync(string portName, DeviceFirmware firmware, IProgress<int>? progress = default)
     {
         return UpdateFirmwareAsync(portName, firmware, forceUpdate: false, progress: progress);
     }
@@ -51,7 +49,7 @@ public static class Bootloader
     /// <returns>
     /// The task object representing the asynchronous firmware update operation.
     /// </returns>
-    public static async Task UpdateFirmwareAsync(string portName, DeviceFirmware firmware, bool forceUpdate, IProgress<int> progress = default)
+    public static async Task UpdateFirmwareAsync(string portName, DeviceFirmware firmware, bool forceUpdate, IProgress<int>? progress = default)
     {
         var flushDelay = TimeSpan.FromMilliseconds(FlushDelayMilliseconds);
         try
