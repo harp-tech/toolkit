@@ -86,7 +86,7 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     {
         return DeviceName == deviceName &&
                HardwareVersion.Satisfies(hardwareVersion) &&
-               (!AssemblyVersion.HasValue || AssemblyVersion.Value == assemblyVersion);
+               (!AssemblyVersion.HasValue || AssemblyVersion.GetValueOrDefault() == assemblyVersion);
     }
 
     /// <summary>
@@ -229,8 +229,10 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     /// </returns>
     public override string ToString()
     {
-        var prerelease = PrereleaseVersion.HasValue ? $"-preview{PrereleaseVersion.Value}" : string.Empty;
-        var assemblyNumber = AssemblyVersion.HasValue ? AssemblyVersion.Value.ToString(CultureInfo.InvariantCulture) : FloatingWildcard;
+        var prerelease = PrereleaseVersion.HasValue ? $"-preview{PrereleaseVersion.GetValueOrDefault()}" : string.Empty;
+        var assemblyNumber = AssemblyVersion.HasValue
+            ? AssemblyVersion.GetValueOrDefault().ToString(CultureInfo.InvariantCulture)
+            : FloatingWildcard;
         return $"{DeviceName}-fw{FirmwareVersion}-harp{CoreVersion}-hw{HardwareVersion}-ass{assemblyNumber}{prerelease}";
     }
 }

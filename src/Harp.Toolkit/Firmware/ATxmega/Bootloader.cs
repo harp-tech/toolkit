@@ -1,5 +1,4 @@
 ﻿using System.IO.Ports;
-using System.Reactive.Linq;
 using Bonsai.Harp;
 
 namespace Harp.Toolkit.Firmware.ATxmega;
@@ -49,7 +48,6 @@ public static class Bootloader
         int timeout,
         IProgress<int>? progress = default)
     {
-        var flushDelay = TimeSpan.FromMilliseconds(FlushDelayMilliseconds);
         try
         {
             using (var device = new AsyncDevice(portName))
@@ -89,7 +87,7 @@ public static class Bootloader
             }
         }
 
-        await Observable.Timer(flushDelay);
+        await Task.Delay(FlushDelayMilliseconds);
         progress?.Report(30);
 
         const int MaxAttempts = 3;
@@ -101,7 +99,7 @@ public static class Bootloader
                 {
                     bootloader.Handshake = Handshake.None;
                     bootloader.Open();
-                    await Observable.Timer(flushDelay);
+                    await Task.Delay(FlushDelayMilliseconds);
                     var pageSize = await ReadPageSizeAsync(bootloader.BaseStream);
                     progress?.Report(40);
 
@@ -131,7 +129,7 @@ public static class Bootloader
             {
                 if (i < MaxAttempts)
                 {
-                    await Observable.Timer(flushDelay);
+                    await Task.Delay(FlushDelayMilliseconds);
                     continue;
                 }
 
@@ -158,7 +156,7 @@ public static class Bootloader
     {
         try
         {
-            await Observable.Timer(TimeSpan.FromMilliseconds(FlushDelayMilliseconds));
+            await Task.Delay(FlushDelayMilliseconds);
             using var bootloader = new SerialPort(portName, DefaultBaudRate, Parity.None, 8, StopBits.One);
             bootloader.Handshake = Handshake.None;
             bootloader.Open();
