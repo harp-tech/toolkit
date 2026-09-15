@@ -16,6 +16,9 @@ public static class Bootloader
     const int ReadPageSize = 0x66;
     const int ExitBootloader = 0x77;
 
+    const int MinPageSize = 64;
+    const int MaxPageSize = 4096;
+
     const int NoError = 0;
     const int UndefinedError = 1;
     const int InvalidAddress = 2;
@@ -195,12 +198,19 @@ public static class Bootloader
     {
         var message = CreateBootloaderMessage(ReadPageSize, address: 0);
         await BootloaderCommandAsync(stream, message);
-        return BitConverter.ToInt32(message, startIndex: 9);
+        var pageSize = BitConverter.ToInt32(message, startIndex: 9);
+        if (pageSize < MinPageSize || pageSize > MaxPageSize || (pageSize & (pageSize - 1)) != 0)
+        {
+            throw new HarpException("The device reported an invalid bootloader page size.");
+        }
+
+        return pageSize;
     }
 
     static async Task BootloaderCommandAsync(Stream stream, byte[] message)
     {
         var bytesRead = 0;
+        var opcode = message[3];
         await stream.WriteAsync(message, 0, message.Length);
         while (bytesRead < message.Length)
         {
@@ -213,6 +223,11 @@ public static class Bootloader
             throw new HarpException("The device responded with an invalid buffer length.");
         }
 
+        if (message[0] != 1 || message[1] != 2 || message[2] != 3 || message[3] != opcode)
+        {
+            throw new HarpException("The device did not respond with a bootloader message.");
+        }
+
         if (!IsValidChecksum(message))
         {
             throw new HarpException("The device responded with an invalid response checksum.");
@@ -220,12 +235,11 @@ public static class Bootloader
 
         switch (message[4])
         {
+            case NoError: break;
             case UndefinedError: throw new HarpException("The device reported an undefined error while updating the bootloader logic.");
             case InvalidAddress: throw new HarpException("The device reported an invalid address while updating the bootloader logic.");
             case InvalidDataLength: throw new HarpException("The device reported an invalid data length while writing the bootloader page.");
-            case NoError:
-            default:
-                break;
+            default: throw new HarpException("The device reported an unknown error while updating the bootloader logic.");
         }
     }
 }
