@@ -10,6 +10,10 @@ public class UpdateFirmwareCommand : Command
         "The name carries the device and version numbers, as in " +
         "<device>-fw<firmware>-harp<core>-hw<hardware>-ass<assembly>.hex.";
 
+    const string SupportedFirmwareHint =
+        "The update writes Intel HEX images to devices built on the ATxmega core. Devices built " +
+        "on other cores update through a different process.";
+
     const string InterruptedUpdateHint =
         "The update may have left the device in bootloader mode. Run the update again, and if the " +
         "device does not respond, power cycle it and re-run with --force, since a device in " +
@@ -68,7 +72,7 @@ public class UpdateFirmwareCommand : Command
 
         Option<bool> forceUpdateOption = new("--force")
         {
-            Description = "Force a firmware update regardless of compatibility."
+            Description = "Force a firmware update, skipping the compatibility check when the device cannot answer."
         };
 
         Arguments.Add(firmwareArgument);
@@ -95,6 +99,13 @@ public class UpdateFirmwareCommand : Command
 
             return portNameOption.ReportErrorsAsync(portName, async () =>
             {
+                if (!string.Equals(firmwarePath.Extension, ".hex", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.Error.WriteLine(
+                        $"The firmware file {firmwarePath.Name} is not an Intel HEX image. {SupportedFirmwareHint}");
+                    return 1;
+                }
+
                 if (!FirmwareMetadata.TryParse(Path.GetFileNameWithoutExtension(firmwarePath.Name), out var metadata))
                 {
                     Console.Error.WriteLine(
