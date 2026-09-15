@@ -1,4 +1,6 @@
-﻿namespace Harp.Toolkit;
+﻿using Bonsai.Harp;
+
+namespace Harp.Toolkit;
 
 static class PortErrors
 {
@@ -41,6 +43,9 @@ static class PortErrors
                 return true;
             case TimeoutException:
                 message = $"The device on the serial port {portName} specified with {portOption.Name} did not respond in time.";
+                return true;
+            case HarpException:
+                message = exception.Message;
                 return true;
             default:
                 message = string.Empty;

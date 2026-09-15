@@ -63,7 +63,10 @@ public static class Bootloader
                     var deviceName = await device.ReadDeviceNameAsync().WithTimeout(FlushDelayMilliseconds);
                     if (!firmware.Metadata.Supports(deviceName, hardwareVersion))
                     {
-                        throw new ArgumentException("The specified firmware is not supported.", nameof(firmware));
+                        throw new HarpException(
+                            $"The firmware file is for {firmware.Metadata.DeviceName} with hardware version " +
+                            $"{firmware.Metadata.HardwareVersion}, but the device on this port is {deviceName} " +
+                            $"with hardware version {hardwareVersion}.");
                     }
                 }
 

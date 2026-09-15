@@ -6,6 +6,10 @@ namespace Harp.Toolkit;
 
 public class UpdateFirmwareCommand : Command
 {
+    const string FirmwareNameHint =
+        "The name carries the device and version numbers, as in " +
+        "<device>-fw<firmware>-harp<core>-hw<hardware>-ass<assembly>.hex.";
+
     public UpdateFirmwareCommand()
         : base("update", "Update the device firmware from a local HEX file.")
     {
@@ -49,10 +53,29 @@ public class UpdateFirmwareCommand : Command
             var portName = parseResult.GetRequiredValue(portNameOption);
             var forceUpdate = parseResult.GetValue(forceUpdateOption);
 
-            var firmware = DeviceFirmware.FromFile(firmwarePath.FullName);
-            Console.WriteLine($"{firmware.Metadata}");
             return portNameOption.ReportErrorsAsync(portName, async () =>
             {
+                if (!FirmwareMetadata.TryParse(Path.GetFileNameWithoutExtension(firmwarePath.Name), out var metadata))
+                {
+                    Console.Error.WriteLine(
+                        $"The name of the firmware file {firmwarePath.Name} does not follow the Harp convention. " +
+                        $"{FirmwareNameHint}");
+                    return 1;
+                }
+
+                DeviceFirmware firmware;
+                try
+                {
+                    firmware = DeviceFirmware.FromFile(metadata, firmwarePath.FullName);
+                }
+                catch (Exception ex) when (ex is ArgumentException or NotSupportedException)
+                {
+                    Console.Error.WriteLine(
+                        $"The firmware file {firmwarePath.Name} is not a valid Intel HEX image. {ex.Message}");
+                    return 1;
+                }
+
+                Console.WriteLine($"{firmware.Metadata}");
                 await AnsiConsole.Progress().StartAsync(async context =>
                 {
                     var task = context.AddTask("Updating firmware");
@@ -60,6 +83,7 @@ public class UpdateFirmwareCommand : Command
                     await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate, progress);
                 });
                 Console.WriteLine("Firmware updated.");
+                return 0;
             });
         });
     }

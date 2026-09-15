@@ -88,43 +88,42 @@ public sealed class DeviceFirmware
     /// </returns>
     public static DeviceFirmware FromFile(string path)
     {
-        return FromFile(path, DefaultPageSize);
+        var metadata = FirmwareMetadata.Parse(Path.GetFileNameWithoutExtension(path));
+        return FromFile(metadata, path);
     }
 
     /// <summary>
-    /// Creates a <see cref="DeviceFirmware"/> object from the specified file in Intel HEX format
-    /// and a specified page size.
+    /// Creates a <see cref="DeviceFirmware"/> object from the specified metadata and file
+    /// in Intel HEX format.
     /// </summary>
+    /// <param name="metadata">The metadata describing the firmware version and supported devices.</param>
     /// <param name="path">The name of the file from which to create the <see cref="DeviceFirmware"/>.</param>
-    /// <param name="pageSize">The size of the memory blocks used to upload the device firmware.</param>
     /// <returns>
     /// A new <see cref="DeviceFirmware"/> object representing the extracted binary firware blob,
-    /// together with the metadata extracted from the firmware file name.
+    /// together with the specified metadata.
     /// </returns>
-    public static DeviceFirmware FromFile(string path, int pageSize)
+    public static DeviceFirmware FromFile(FirmwareMetadata metadata, string path)
     {
-        var metadata = Path.GetFileNameWithoutExtension(path);
         using (var stream = File.OpenRead(path))
         {
-            return FromStream(metadata, stream, pageSize);
+            return FromStream(metadata, stream, DefaultPageSize);
         }
     }
 
     /// <summary>
     /// Creates a <see cref="DeviceFirmware"/> object extracted from the specified ASCII
-    /// stream in Intel HEX format, the specified metadata string and page size.
+    /// stream in Intel HEX format, the specified metadata and page size.
     /// </summary>
-    /// <param name="metadata">The firmware metadata encoded in a text string representation.</param>
+    /// <param name="metadata">The metadata describing the firmware version and supported devices.</param>
     /// <param name="stream">The ASCII stream in Intel HEX format from which to extract the device firmware.</param>
     /// <param name="pageSize">The size of the memory blocks used to upload the device firmware.</param>
     /// <returns>
     /// A new <see cref="DeviceFirmware"/> object representing the extracted binary firware blob,
-    /// together with the metadata extracted from the firmware file name.
+    /// together with the specified metadata.
     /// </returns>
-    public static DeviceFirmware FromStream(string metadata, Stream stream, int pageSize)
+    public static DeviceFirmware FromStream(FirmwareMetadata metadata, Stream stream, int pageSize)
     {
         const char StartCode = ':';
-        var firmwareMetadata = FirmwareMetadata.Parse(metadata);
         using (var reader = new StreamReader(stream))
         {
             var lineNumber = 0;
@@ -178,7 +177,7 @@ public sealed class DeviceFirmware
             }
 
             var byteCode = Array.ConvertAll(data, value => (byte)value);
-            return new DeviceFirmware(firmwareMetadata, byteCode);
+            return new DeviceFirmware(metadata, byteCode);
         }
     }
 
