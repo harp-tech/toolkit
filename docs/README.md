@@ -32,17 +32,23 @@ Tool for inspecting, updating and interfacing with Harp devices, with automatic 
 
     Each read waits up to 2000 milliseconds for a response. Pass `--timeout` to change that default, or `--timeout -1` to wait indefinitely.
 
-6. To update the device firmware from a local HEX file:
-
-    ```cmd
-    dotnet harp.toolkit update --port COM4 Behavior-fw3.2-harp1.13-hw2.0-ass0.hex
-    ```
-
-7. To restore the tool at any point, run:
+6. To restore the tool at any point, run:
 
     ```cmd
     dotnet tool restore
     ```
+
+## Firmware Update
+
+`harp.toolkit` can write a firmware image to a connected device, checking that the image is compatible before writing anything:
+
+```cmd
+dotnet harp.toolkit update --port COM4 Behavior-fw3.3-harp1.15-hw2.0-ass0.hex
+```
+
+An update resets the device, so avoid updating firmware that is part of a running experiment, since interrupting an update leaves the device in bootloader mode until one completes successfully.
+
+See [Firmware Update](https://harp-tech.org/toolkit/articles/update.html) for the naming convention used by firmware images, how to recover a device left in bootloader mode, and the available options.
 
 ## Code Generation
 
