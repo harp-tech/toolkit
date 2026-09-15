@@ -129,7 +129,8 @@ public static class Bootloader
                     break;
                 };
             }
-            catch (Exception ex) when (ex is UnauthorizedAccessException || ex is IOException || ex is TimeoutException)
+            catch (Exception ex) when (ex is UnauthorizedAccessException || ex is IOException ||
+                                      ex is TimeoutException || ex is InvalidOperationException)
             {
                 if (i < MaxAttempts)
                 {

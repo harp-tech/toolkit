@@ -10,6 +10,44 @@ public class UpdateFirmwareCommand : Command
         "The name carries the device and version numbers, as in " +
         "<device>-fw<firmware>-harp<core>-hw<hardware>-ass<assembly>.hex.";
 
+    const string InterruptedUpdateHint =
+        "The update may have left the device in bootloader mode. Run the update again, and if the " +
+        "device does not respond, power cycle it and re-run with --force, since a device in " +
+        "bootloader mode cannot report its identity for the compatibility check.";
+
+    const string NoResponseHint =
+        "The device may still be restarting from a previous operation, in which case running the " +
+        "update again will succeed.";
+
+    const string BootloaderModeHint =
+        "A device left in bootloader mode by an interrupted update does not answer Harp commands. " +
+        "If that is what happened here, re-run with --force, which skips the compatibility check " +
+        "when the device cannot answer.";
+
+    const int DeviceResetStage = 30;
+
+    static bool TryDescribeInterruption(Exception exception, int percent, out string message)
+    {
+        switch (exception)
+        {
+            case FileNotFoundException:
+            case UnauthorizedAccessException:
+            case InvalidOperationException:
+            case OperationCanceledException:
+                message = $"The connection to the device was lost while updating at {percent}%.";
+                return true;
+            case TimeoutException:
+                message = $"The device stopped responding while updating at {percent}%.";
+                return true;
+            case Bonsai.Harp.HarpException:
+                message = $"{exception.Message} The update stopped at {percent}%.";
+                return true;
+            default:
+                message = $"The update failed at {percent}%. {exception.GetType().Name}: {exception.Message}";
+                return true;
+        }
+    }
+
     public UpdateFirmwareCommand()
         : base("update", "Update the device firmware from a local HEX file.")
     {
@@ -76,12 +114,33 @@ public class UpdateFirmwareCommand : Command
                 }
 
                 Console.WriteLine($"{firmware.Metadata}");
-                await AnsiConsole.Progress().StartAsync(async context =>
+                var lastProgress = -1;
+                try
                 {
-                    var task = context.AddTask("Updating firmware");
-                    var progress = new ImmediateProgress<int>(percent => task.Value = percent);
-                    await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate, progress);
-                });
+                    await AnsiConsole.Progress().StartAsync(async context =>
+                    {
+                        var task = context.AddTask("Updating firmware");
+                        var progress = new ImmediateProgress<int>(percent =>
+                        {
+                            lastProgress = percent;
+                            task.Value = percent;
+                        });
+                        await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate, progress);
+                    });
+                }
+                catch (Exception ex) when (lastProgress >= DeviceResetStage &&
+                                           TryDescribeInterruption(ex, lastProgress, out var interruption))
+                {
+                    Console.Error.WriteLine($"{interruption} {InterruptedUpdateHint}");
+                    return 1;
+                }
+                catch (TimeoutException ex) when (!forceUpdate &&
+                                                 portNameOption.TryDescribe(ex, portName, out var cause))
+                {
+                    Console.Error.WriteLine($"{cause} {NoResponseHint} {BootloaderModeHint}");
+                    return 1;
+                }
+
                 Console.WriteLine("Firmware updated.");
                 return 0;
             });
