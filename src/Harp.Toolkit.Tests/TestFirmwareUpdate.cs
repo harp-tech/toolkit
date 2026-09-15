@@ -6,7 +6,8 @@ namespace Harp.Toolkit.Tests;
 
 /// <summary>
 /// Repeatedly updates the firmware of a physical device and classifies any failures by the stage
-/// they occurred at, so that a change to <see cref="Bootloader.UpdateFirmwareAsync(string, DeviceFirmware, IProgress{int})"/>
+/// they occurred at, so that a change to
+/// <see cref="Bootloader.UpdateFirmwareAsync(string, DeviceFirmware, bool, int, IProgress{int})"/>
 /// can be judged against a measured failure rate.
 /// </summary>
 /// <remarks>
@@ -22,6 +23,12 @@ public class TestFirmwareUpdate
     /// the next one begins.
     /// </summary>
     const int ReadyTimeoutMilliseconds = 15000;
+
+    /// <summary>
+    /// The time allowed for the device to answer a Harp command during an update, held independent
+    /// of the default carried by the tool so that changing the default cannot change a measurement.
+    /// </summary>
+    const int ResponseTimeoutMilliseconds = 2000;
 
     public TestContext TestContext { get; set; } = null!;
 
@@ -56,7 +63,7 @@ public class TestFirmwareUpdate
     {
         try
         {
-            await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate: true);
+            await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate: true, ResponseTimeoutMilliseconds);
             return null;
         }
         catch (Exception ex)
@@ -105,7 +112,8 @@ public class TestFirmwareUpdate
             var stopwatch = Stopwatch.StartNew();
             try
             {
-                await Bootloader.UpdateFirmwareAsync(portName, firmware, progress);
+                await Bootloader.UpdateFirmwareAsync(
+                    portName, firmware, forceUpdate: false, ResponseTimeoutMilliseconds, progress);
                 var elapsed = stopwatch.Elapsed.TotalMilliseconds;
                 successMilliseconds.Add(elapsed);
                 if (progress.BootloaderAttempts > 1)

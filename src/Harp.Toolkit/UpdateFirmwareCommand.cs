@@ -16,13 +16,12 @@ public class UpdateFirmwareCommand : Command
         "bootloader mode cannot report its identity for the compatibility check.";
 
     const string NoResponseHint =
-        "The device may still be restarting from a previous operation, in which case running the " +
-        "update again will succeed.";
+        "No device answered the bootloader protocol. The device can still be restarting from a " +
+        "previous operation, or it can be on a different port.";
 
     const string BootloaderModeHint =
-        "A device left in bootloader mode by an interrupted update does not answer Harp commands. " +
-        "If that is what happened here, re-run with --force, which skips the compatibility check " +
-        "when the device cannot answer.";
+        "The device is in bootloader mode, left there by an interrupted update. Re-run with " +
+        "--force, which skips the compatibility check when the device cannot answer.";
 
     const int DeviceResetStage = 30;
 
@@ -52,6 +51,7 @@ public class UpdateFirmwareCommand : Command
         : base("update", "Update the device firmware from a local HEX file.")
     {
         DevicePortNameOption portNameOption = new();
+        PortTimeoutOption portTimeoutOption = new();
         Argument<FileInfo> firmwareArgument = ArgumentValidation.AcceptExistingOnly(
             new Argument<FileInfo>("firmware")
             {
@@ -73,6 +73,7 @@ public class UpdateFirmwareCommand : Command
 
         Arguments.Add(firmwareArgument);
         Options.Add(portNameOption);
+        Options.Add(portTimeoutOption);
         Options.Add(firmwarePathOption);
         Options.Add(forceUpdateOption);
         Validators.Add(result =>
@@ -89,6 +90,7 @@ public class UpdateFirmwareCommand : Command
         {
             var firmwarePath = parseResult.GetValue(firmwareArgument) ?? parseResult.GetValue(firmwarePathOption)!;
             var portName = parseResult.GetRequiredValue(portNameOption);
+            var portTimeout = parseResult.GetRequiredValue(portTimeoutOption);
             var forceUpdate = parseResult.GetValue(forceUpdateOption);
 
             return portNameOption.ReportErrorsAsync(portName, async () =>
@@ -125,7 +127,7 @@ public class UpdateFirmwareCommand : Command
                             lastProgress = percent;
                             task.Value = percent;
                         });
-                        await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate, progress);
+                        await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate, portTimeout, progress);
                     });
                 }
                 catch (Exception ex) when (lastProgress >= DeviceResetStage &&
@@ -137,7 +139,8 @@ public class UpdateFirmwareCommand : Command
                 catch (TimeoutException ex) when (!forceUpdate &&
                                                  portNameOption.TryDescribe(ex, portName, out var cause))
                 {
-                    Console.Error.WriteLine($"{cause} {NoResponseHint} {BootloaderModeHint}");
+                    var hint = await Bootloader.IsBootloaderAsync(portName) ? BootloaderModeHint : NoResponseHint;
+                    Console.Error.WriteLine($"{cause} {hint}");
                     return 1;
                 }
 

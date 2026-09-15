@@ -10,7 +10,10 @@ namespace Harp.Toolkit.Firmware.ATxmega;
 public static class Bootloader
 {
     const int HeaderSize = 15;
+    const int DefaultBaudRate = 1000000;
+
     const int FlushDelayMilliseconds = 500;
+    const int BootloaderTimeoutMilliseconds = 500;
 
     const int WritePage = 0x0;
     const int ReadPageSize = 0x66;
@@ -29,30 +32,22 @@ public static class Bootloader
     /// </summary>
     /// <param name="portName">The name of the serial port used to communicate with the Harp device.</param>
     /// <param name="firmware">The binary firmware image to upload to the device.</param>
-    /// <param name="progress">The optional <see cref="IProgress{Int32}"/> object used to report update progress.</param>
-    /// <returns>
-    /// The task object representing the asynchronous firmware update operation.
-    /// </returns>
-    public static Task UpdateFirmwareAsync(string portName, DeviceFirmware firmware, IProgress<int>? progress = default)
-    {
-        return UpdateFirmwareAsync(portName, firmware, forceUpdate: false, progress: progress);
-    }
-
-    /// <summary>
-    /// Asynchronously updates the firmware of the Harp device on the specified port.
-    /// </summary>
-    /// <param name="portName">The name of the serial port used to communicate with the Harp device.</param>
-    /// <param name="firmware">The binary firmware image to upload to the device.</param>
     /// <param name="forceUpdate">
     /// <b>true</b> to indicate that the firmware should be uploaded even if the device reports unsupported hardware,
     /// or is in bootloader mode; <b>false</b> to throw an exception if the firmware is not supported, or the device
     /// is in an invalid state.
     /// </param>
+    /// <param name="timeout">The time to wait, in milliseconds, for the device to answer a Harp command.</param>
     /// <param name="progress">The optional <see cref="IProgress{Int32}"/> object used to report update progress.</param>
     /// <returns>
     /// The task object representing the asynchronous firmware update operation.
     /// </returns>
-    public static async Task UpdateFirmwareAsync(string portName, DeviceFirmware firmware, bool forceUpdate, IProgress<int>? progress = default)
+    public static async Task UpdateFirmwareAsync(
+        string portName,
+        DeviceFirmware firmware,
+        bool forceUpdate,
+        int timeout,
+        IProgress<int>? progress = default)
     {
         var flushDelay = TimeSpan.FromMilliseconds(FlushDelayMilliseconds);
         try
@@ -62,8 +57,8 @@ public static class Bootloader
                 progress?.Report(10);
                 if (!forceUpdate)
                 {
-                    var hardwareVersion = await device.ReadHardwareVersionAsync().WithTimeout(FlushDelayMilliseconds);
-                    var deviceName = await device.ReadDeviceNameAsync().WithTimeout(FlushDelayMilliseconds);
+                    var hardwareVersion = await device.ReadHardwareVersionAsync().WithTimeout(timeout);
+                    var deviceName = await device.ReadDeviceNameAsync().WithTimeout(timeout);
                     if (!firmware.Metadata.Supports(deviceName, hardwareVersion))
                     {
                         throw new HarpException(
@@ -74,7 +69,7 @@ public static class Bootloader
                 }
 
                 progress?.Report(20);
-                var reset = await device.ReadResetDeviceAsync().WithTimeout(FlushDelayMilliseconds);
+                var reset = await device.ReadResetDeviceAsync().WithTimeout(timeout);
                 if ((reset & ResetFlags.BootFromEeprom) != 0)
                 {
                     await device.WriteResetDeviceAsync(ResetFlags.RestoreEeprom);
@@ -98,7 +93,6 @@ public static class Bootloader
         progress?.Report(30);
 
         const int MaxAttempts = 3;
-        const int DefaultBaudRate = 1000000;
         for (int i = 1; i <= MaxAttempts; i++)
         {
             try
@@ -143,6 +137,38 @@ public static class Bootloader
 
                 throw;
             }
+        }
+    }
+
+    /// <summary>
+    /// Asynchronously determines whether a device in bootloader mode is listening on the specified port.
+    /// </summary>
+    /// <param name="portName">The name of the serial port used to communicate with the Harp device.</param>
+    /// <returns>
+    /// The task object representing the asynchronous operation. The <see cref="Task{TResult}.Result"/>
+    /// property is <b>true</b> if a device answered the bootloader protocol; otherwise, <b>false</b>.
+    /// </returns>
+    /// <remarks>
+    /// The bootloader restarts its timeout on every byte it receives, so the device is probed exactly
+    /// once. Probing repeatedly would hold a device in bootloader mode. The port is opened after a
+    /// settle delay, since a port closed moments earlier can still refuse to open, which would
+    /// otherwise be reported as the absence of a bootloader.
+    /// </remarks>
+    public static async Task<bool> IsBootloaderAsync(string portName)
+    {
+        try
+        {
+            await Observable.Timer(TimeSpan.FromMilliseconds(FlushDelayMilliseconds));
+            using var bootloader = new SerialPort(portName, DefaultBaudRate, Parity.None, 8, StopBits.One);
+            bootloader.Handshake = Handshake.None;
+            bootloader.Open();
+            await ReadPageSizeAsync(bootloader.BaseStream);
+            return true;
+        }
+        catch (Exception ex) when (ex is HarpException or TimeoutException or IOException or
+                                         UnauthorizedAccessException or InvalidOperationException)
+        {
+            return false;
         }
     }
 
@@ -215,7 +241,7 @@ public static class Bootloader
         while (bytesRead < message.Length)
         {
             bytesRead += await stream.ReadAsync(message, bytesRead, message.Length - bytesRead)
-                                     .WithTimeout(FlushDelayMilliseconds);
+                                     .WithTimeout(BootloaderTimeoutMilliseconds);
         }
 
         if (bytesRead != message.Length)
