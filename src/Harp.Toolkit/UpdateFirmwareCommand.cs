@@ -119,7 +119,7 @@ public class UpdateFirmwareCommand : Command
                 var lastProgress = -1;
                 try
                 {
-                    await AnsiConsole.Progress().StartAsync(async context =>
+                    await AnsiConsole.Progress().AutoClear(true).StartAsync(async context =>
                     {
                         var task = context.AddTask("Updating firmware");
                         var progress = new ImmediateProgress<int>(percent =>
