@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Harp.Toolkit\Harp.Toolkit.csproj" />
+    <ProjectReference Include="..\Harp.Toolkit.Core\Harp.Toolkit.Core.csproj" />
   </ItemGroup>
 
 </Project>

@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harp.Toolkit", "src\Harp.Toolkit\Harp.Toolkit.csproj", "{BFC25910-BC44-4792-9CDE-5B3A17D0B157}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harp.Toolkit.Core", "src\Harp.Toolkit.Core\Harp.Toolkit.Core.csproj", "{98342220-D9A0-4B3D-B107-F89B337D8F72}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Harp.Toolkit.Tests", "src\Harp.Toolkit.Tests\Harp.Toolkit.Tests.csproj", "{1F352150-EC14-445E-873E-24CA0F38BFE9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{DEE5DD87-39C1-BF34-B639-A387DCCF972B}"
@@ -27,6 +29,10 @@ Global
 		{BFC25910-BC44-4792-9CDE-5B3A17D0B157}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BFC25910-BC44-4792-9CDE-5B3A17D0B157}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BFC25910-BC44-4792-9CDE-5B3A17D0B157}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98342220-D9A0-4B3D-B107-F89B337D8F72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98342220-D9A0-4B3D-B107-F89B337D8F72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98342220-D9A0-4B3D-B107-F89B337D8F72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98342220-D9A0-4B3D-B107-F89B337D8F72}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1F352150-EC14-445E-873E-24CA0F38BFE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1F352150-EC14-445E-873E-24CA0F38BFE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1F352150-EC14-445E-873E-24CA0F38BFE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
