@@ -2,6 +2,7 @@
 using System.Globalization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Bonsai.Harp;
+using Harp.Toolkit.Firmware;
 
 namespace Harp.Toolkit.Tests;
 
@@ -137,32 +138,20 @@ static class HardwareTestHelper
     }
 
     /// <summary>
-    /// Polls the device on the specified port until it responds and returns the elapsed duration,
-    /// or <see langword="null"/> when it never responded within the timeout.
+    /// Waits until the device on the specified port is ready and returns the elapsed duration, or
+    /// <see langword="null"/> when it did not become ready within the timeout.
     /// </summary>
     /// <remarks>
-    /// This helper is intended to wait for a device application that is still starting, without
-    /// the need for a fixed settle delay. Polling is safe here only because the device is known
-    /// to be running its application. A device in bootloader mode would be held there by the
-    /// polling commands. Use <see cref="CheckDeviceResponseAsync"/> to handle that case instead.
+    /// This measures what <see cref="FirmwareUpdate.WaitUntilReadyAsync"/> does. A device in
+    /// bootloader mode would be held there by the wait. Use
+    /// <see cref="CheckDeviceResponseAsync"/> for that case instead.
     /// </remarks>
-    public static async Task<double?> WaitUntilDeviceRespondsAsync(string portName, int timeoutMilliseconds)
+    public static async Task<double?> MeasureTimeUntilReadyAsync(string portName, int timeoutMilliseconds)
     {
-        const int PollIntervalMilliseconds = 50;
-
         var stopwatch = Stopwatch.StartNew();
-        do
-        {
-            if (await TryReadWhoAmIAsync(portName) == null)
-            {
-                return stopwatch.Elapsed.TotalMilliseconds;
-            }
-
-            await Task.Delay(PollIntervalMilliseconds);
-        }
-        while (stopwatch.ElapsedMilliseconds < timeoutMilliseconds);
-
-        return null;
+        return await FirmwareUpdate.WaitUntilReadyAsync(portName, timeoutMilliseconds)
+            ? stopwatch.Elapsed.TotalMilliseconds
+            : null;
     }
 
     /// <summary>

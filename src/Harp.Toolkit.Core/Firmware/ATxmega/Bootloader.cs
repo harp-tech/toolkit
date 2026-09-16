@@ -38,16 +38,24 @@ public static class Bootloader
     /// </param>
     /// <param name="timeout">The time to wait, in milliseconds, for the device to answer a Harp command.</param>
     /// <param name="progress">The optional object that receives update progress reports.</param>
+    /// <param name="cancellationToken">The token that cancels the update.</param>
     /// <returns>
     /// The task object representing the asynchronous firmware update operation.
     /// </returns>
+    /// <remarks>
+    /// The update accepts cancellation only before it resets the device. A device in the
+    /// bootloader stays there until an update completes, so the update ignores the token from
+    /// the <see cref="UpdateStage.Reset"/> stage onwards.
+    /// </remarks>
     public static async Task UpdateFirmwareAsync(
         string portName,
         DeviceFirmware firmware,
         bool forceUpdate,
         int timeout,
-        IProgress<UpdateProgress>? progress = default)
+        IProgress<UpdateProgress>? progress = default,
+        CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         progress?.Report(new(UpdateStage.Connect, 0));
         try
         {
@@ -56,8 +64,8 @@ public static class Bootloader
                 progress?.Report(new(UpdateStage.Check, 10));
                 if (!forceUpdate)
                 {
-                    var hardwareVersion = await device.ReadHardwareVersionAsync().WithTimeout(timeout);
-                    var deviceName = await device.ReadDeviceNameAsync().WithTimeout(timeout);
+                    var hardwareVersion = await device.ReadHardwareVersionAsync(cancellationToken).WithTimeout(timeout);
+                    var deviceName = await device.ReadDeviceNameAsync(cancellationToken).WithTimeout(timeout);
                     if (!firmware.Metadata.Supports(deviceName, hardwareVersion))
                     {
                         throw new HarpException(
@@ -67,6 +75,7 @@ public static class Bootloader
                     }
                 }
 
+                cancellationToken.ThrowIfCancellationRequested();
                 progress?.Report(new(UpdateStage.Reset, 20));
                 var reset = await device.ReadResetDeviceAsync().WithTimeout(timeout);
                 if ((reset & ResetFlags.BootFromEeprom) != 0)

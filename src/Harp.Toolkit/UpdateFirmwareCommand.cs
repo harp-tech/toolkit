@@ -29,6 +29,12 @@ public class UpdateFirmwareCommand : Command
         "The device is in bootloader mode, left there by an interrupted update. Re-run with " +
         "--force, which skips the compatibility check when the device cannot answer.";
 
+    const string NotReadyHint =
+        "The device may still be restarting. Run 'harp.toolkit --port <port>' to check it before " +
+        "updating again.";
+
+    const int ReadyTimeoutMilliseconds = 20000;
+
     static readonly int StageWidth = Enum.GetValues<UpdateStage>().Max(stage => DescribeStage(stage).Length);
 
     static string DescribeStage(UpdateStage stage)
@@ -116,7 +122,7 @@ public class UpdateFirmwareCommand : Command
                 result.AddError("The firmware file must be given either as an argument or with --path, not both.");
         });
 
-        SetAction(parseResult =>
+        SetAction((parseResult, cancellationToken) =>
         {
             var firmwarePath = parseResult.GetValue(firmwareArgument) ?? parseResult.GetValue(firmwarePathOption)!;
             var portName = parseResult.GetRequiredValue(portNameOption);
@@ -170,8 +176,14 @@ public class UpdateFirmwareCommand : Command
                             task.Description = DescribeStage(update.Stage);
                             task.Value = update.Percent;
                         });
-                        await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate, portTimeout, progress);
+                        await Bootloader.UpdateFirmwareAsync(
+                            portName, firmware, forceUpdate, portTimeout, progress, cancellationToken);
                     });
+                }
+                catch (OperationCanceledException) when (!enteredBootloader)
+                {
+                    Console.Error.WriteLine("The update was canceled before the device was reset.");
+                    return 1;
                 }
                 catch (Exception ex) when (enteredBootloader &&
                                            TryDescribeInterruption(ex, lastPercent, out var interruption))
@@ -184,6 +196,29 @@ public class UpdateFirmwareCommand : Command
                 {
                     var hint = await Bootloader.IsBootloaderAsync(portName) ? BootloaderModeHint : NoResponseHint;
                     Console.Error.WriteLine($"{cause} {hint}");
+                    return 1;
+                }
+
+                bool ready;
+                try
+                {
+                    ready = await AnsiConsole.Status().StartAsync(
+                        "Waiting for the device to restart",
+                        _ => FirmwareUpdate.WaitUntilReadyAsync(portName, ReadyTimeoutMilliseconds, cancellationToken));
+                }
+                catch (OperationCanceledException)
+                {
+                    Console.Error.WriteLine(
+                        $"The firmware was written, and the wait for the device on {portName} was " +
+                        "canceled. The device may still be restarting.");
+                    return 1;
+                }
+
+                if (!ready)
+                {
+                    Console.Error.WriteLine(
+                        $"The firmware was written, but the device on {portName} did not answer " +
+                        $"in time. {NotReadyHint}");
                     return 1;
                 }
 

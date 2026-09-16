@@ -59,7 +59,7 @@ public class TestFirmwareUpdate
         TestContext.WriteLine("firmware image: {0}", firmwarePath);
 
         // Wait until the device responds, to avoid starting with a device still restarting
-        if (!(await HardwareTestHelper.WaitUntilDeviceRespondsAsync(portName, ReadyTimeoutMilliseconds)).HasValue)
+        if (!(await HardwareTestHelper.MeasureTimeUntilReadyAsync(portName, ReadyTimeoutMilliseconds)).HasValue)
         {
             Assert.Inconclusive("The device did not respond before the run started.");
         }
@@ -113,7 +113,7 @@ public class TestFirmwareUpdate
 
                 // Start the next update from a device that has demonstrably responded, rather
                 // than after a fixed delay, so that every iteration begins in the same state.
-                var ready = await HardwareTestHelper.WaitUntilDeviceRespondsAsync(portName, ReadyTimeoutMilliseconds);
+                var ready = await HardwareTestHelper.MeasureTimeUntilReadyAsync(portName, ReadyTimeoutMilliseconds);
                 if (ready.HasValue)
                 {
                     readyMilliseconds.Add(ready.GetValueOrDefault());
