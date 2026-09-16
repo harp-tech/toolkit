@@ -1,5 +1,7 @@
 ﻿using System.CommandLine;
 using Spectre.Console;
+using Spectre.Console.Rendering;
+using Harp.Toolkit.Firmware;
 using Harp.Toolkit.Firmware.ATxmega;
 
 namespace Harp.Toolkit;
@@ -27,7 +29,31 @@ public class UpdateFirmwareCommand : Command
         "The device is in bootloader mode, left there by an interrupted update. Re-run with " +
         "--force, which skips the compatibility check when the device cannot answer.";
 
-    const int DeviceResetStage = 30;
+    static readonly int StageWidth = Enum.GetValues<UpdateStage>().Max(stage => DescribeStage(stage).Length);
+
+    static string DescribeStage(UpdateStage stage)
+    {
+        return stage switch
+        {
+            UpdateStage.Connect => "Connecting to the device",
+            UpdateStage.Check => "Checking compatibility",
+            UpdateStage.Reset => "Resetting the device",
+            UpdateStage.Bootloader => "Waiting for bootloader",
+            UpdateStage.Write => "Writing the image",
+            UpdateStage.Restart => "Restarting the device",
+            _ => "Updating firmware"
+        };
+    }
+
+    sealed class StageColumn : ProgressColumn
+    {
+        public override int? GetColumnWidth(RenderOptions options) => StageWidth;
+
+        public override IRenderable Render(RenderOptions options, ProgressTask task, TimeSpan deltaTime)
+        {
+            return new Markup(Markup.Escape(task.Description)).Overflow(Overflow.Ellipsis).LeftJustified();
+        }
+    }
 
     static bool TryDescribeInterruption(Exception exception, int percent, out string message)
     {
@@ -127,22 +153,28 @@ public class UpdateFirmwareCommand : Command
                 }
 
                 Console.WriteLine($"{firmware.Metadata}");
-                var lastProgress = -1;
+                var enteredBootloader = false;
+                var lastPercent = 0;
                 try
                 {
-                    await AnsiConsole.Progress().AutoClear(true).StartAsync(async context =>
+                    await AnsiConsole.Progress().AutoClear(true).Columns(
+                        new StageColumn(),
+                        new ProgressBarColumn(),
+                        new PercentageColumn()).StartAsync(async context =>
                     {
                         var task = context.AddTask("Updating firmware");
-                        var progress = new ImmediateProgress<int>(percent =>
+                        var progress = new ImmediateProgress<UpdateProgress>(update =>
                         {
-                            lastProgress = percent;
-                            task.Value = percent;
+                            enteredBootloader |= update.Stage == UpdateStage.Bootloader;
+                            lastPercent = update.Percent;
+                            task.Description = DescribeStage(update.Stage);
+                            task.Value = update.Percent;
                         });
                         await Bootloader.UpdateFirmwareAsync(portName, firmware, forceUpdate, portTimeout, progress);
                     });
                 }
-                catch (Exception ex) when (lastProgress >= DeviceResetStage &&
-                                           TryDescribeInterruption(ex, lastProgress, out var interruption))
+                catch (Exception ex) when (enteredBootloader &&
+                                           TryDescribeInterruption(ex, lastPercent, out var interruption))
                 {
                     Console.Error.WriteLine($"{interruption} {InterruptedUpdateHint}");
                     return 1;

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Harp.Toolkit.Firmware;
 using Harp.Toolkit.Firmware.ATxmega;
 
 namespace Harp.Toolkit.Tests;
@@ -7,7 +8,7 @@ namespace Harp.Toolkit.Tests;
 /// <summary>
 /// Repeatedly updates the firmware of a physical device and classifies any failures by the stage
 /// they occurred at, so that a change to
-/// <see cref="Bootloader.UpdateFirmwareAsync(string, DeviceFirmware, bool, int, IProgress{int})"/>
+/// <see cref="Bootloader.UpdateFirmwareAsync(string, DeviceFirmware, bool, int, IProgress{UpdateProgress})"/>
 /// can be judged against a measured failure rate.
 /// </summary>
 /// <remarks>
@@ -31,33 +32,6 @@ public class TestFirmwareUpdate
     const int ResponseTimeoutMilliseconds = 2000;
 
     public TestContext TestContext { get; set; } = null!;
-
-    /// <summary>
-    /// Records a progress value synchronously, so the last stage reached is observable at the
-    /// point an exception is caught.
-    /// </summary>
-    /// <remarks>
-    /// <see cref="Progress{T}"/> is unsuitable here because it marshals its callbacks, so the
-    /// final value can arrive after the exception has already been handled.
-    /// </remarks>
-    sealed class StageProgress : IProgress<int>
-    {
-        const int BootloaderStage = 40;
-
-        public int Stage { get; private set; } = -1;
-
-        public int BootloaderAttempts { get; private set; }
-
-        public void Report(int value)
-        {
-            if (value == BootloaderStage)
-            {
-                BootloaderAttempts++;
-            }
-
-            Stage = value;
-        }
-    }
 
     static async Task<Exception?> TryForceUpdateAsync(string portName, DeviceFirmware firmware)
     {
@@ -92,7 +66,7 @@ public class TestFirmwareUpdate
 
         var successMilliseconds = new List<double>();
         var failures = new List<string>();
-        var failureStages = new Dictionary<int, int>();
+        var failureStages = new Dictionary<UpdateStage, int>();
         var failureTypes = new Dictionary<string, int>();
         var recoveryFailures = new List<string>();
         var responseMilliseconds = new List<double>();
@@ -103,12 +77,24 @@ public class TestFirmwareUpdate
         var attempted = 0;
         string? setupFailure = null;
 
-        // Stage 30 means a failure while reopening the port or waiting for the bootloader, and
-        // beyond 40 while writing the image, which leaves the device in bootloader mode.
+        // A failure at Bootloader means the port could not be reopened, and a failure at Write or
+        // later leaves the device in bootloader mode.
         for (int i = 0; i < iterations; i++)
         {
             attempted = i + 1;
-            var progress = new StageProgress();
+            var stage = default(UpdateStage);
+            var percent = 0;
+            var bootloaderAttempts = 1;
+            var progress = new ImmediateProgress<UpdateProgress>(update =>
+            {
+                if (update.Percent < percent)
+                {
+                    bootloaderAttempts++;
+                }
+
+                stage = update.Stage;
+                percent = update.Percent;
+            });
             var stopwatch = Stopwatch.StartNew();
             try
             {
@@ -116,13 +102,13 @@ public class TestFirmwareUpdate
                     portName, firmware, forceUpdate: false, ResponseTimeoutMilliseconds, progress);
                 var elapsed = stopwatch.Elapsed.TotalMilliseconds;
                 successMilliseconds.Add(elapsed);
-                if (progress.BootloaderAttempts > 1)
+                if (bootloaderAttempts > 1)
                 {
                     retried++;
                     TestContext.WriteLine(
                         "iteration {0}: succeeded after {1} attempts at the bootloader",
                         i,
-                        progress.BootloaderAttempts);
+                        bootloaderAttempts);
                 }
 
                 // Start the next update from a device that has demonstrably responded, rather
@@ -167,15 +153,15 @@ public class TestFirmwareUpdate
                 var description = string.Format(
                     "iteration {0}: reached stage {1} on bootloader attempt {2}: {3}: {4}",
                     i,
-                    progress.Stage,
-                    progress.BootloaderAttempts,
+                    stage,
+                    bootloaderAttempts,
                     failureType,
                     ex.Message);
                 failures.Add(description);
                 TestContext.WriteLine(description);
 
-                failureStages.TryGetValue(progress.Stage, out var stageCount);
-                failureStages[progress.Stage] = stageCount + 1;
+                failureStages.TryGetValue(stage, out var stageCount);
+                failureStages[stage] = stageCount + 1;
                 failureTypes.TryGetValue(failureType, out var typeCount);
                 failureTypes[failureType] = typeCount + 1;
 
@@ -210,7 +196,7 @@ public class TestFirmwareUpdate
                 recoveryFailures.Add(string.Format(
                     "iteration {0}: reached stage {1} and left the device unresponsive ({2}), recovery failed with {3}: {4}",
                     i,
-                    progress.Stage,
+                    stage,
                     noResponse.GetType().Name,
                     recoveryError.GetType().Name,
                     recoveryError.Message));
