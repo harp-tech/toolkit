@@ -7,26 +7,28 @@ Tool for inspecting, updating and interfacing with Harp devices, with automatic 
 1. Navigate to the [Harp.Toolkit NuGet tool package](https://www.nuget.org/packages/Harp.Toolkit/)
 2. Click `.NET CLI (Local)` and copy the two suggested commands. E.g.:
 
-    ```cmd
-    dotnet new tool-manifest # if you are setting up this repo
+    ```text
+    dotnet new tool-manifest
     dotnet tool install --local Harp.Toolkit
     ```
 
+    The first command only needs to be run when setting up a new repository.
+
 3. To view the tool help reference documentation, run:
 
-    ```cmd
+    ```text
     dotnet harp.toolkit --help
     ```
 
 4. To list all available system serial ports:
 
-    ```cmd
+    ```text
     dotnet harp.toolkit list
     ```
 
 5. To display info about a device connected to a specific serial port:
 
-    ```cmd
+    ```text
     dotnet harp.toolkit --port COM4
     ```
 
@@ -34,7 +36,7 @@ Tool for inspecting, updating and interfacing with Harp devices, with automatic 
 
 6. To restore the tool at any point, run:
 
-    ```cmd
+    ```text
     dotnet tool restore
     ```
 
@@ -42,7 +44,7 @@ Tool for inspecting, updating and interfacing with Harp devices, with automatic 
 
 `harp.toolkit` can write a firmware image to a connected device, checking that the image is compatible before writing anything:
 
-```cmd
+```text
 dotnet harp.toolkit update --port COM4 Behavior-fw3.3-harp1.15-hw2.0-ass0.hex
 ```
 
@@ -54,13 +56,13 @@ See [Firmware Update](https://harp-tech.org/toolkit/articles/update.html) for th
 
 `harp.toolkit` can also generate device interface and firmware code from a `device.yml` metadata file. With a `device.yml` in the current directory, the following generates the .NET device interface, targeting [Bonsai.Harp](https://harp-tech.org/api/Bonsai.Harp.html):
 
-```cmd
+```text
 dotnet harp.toolkit generate interface
 ```
 
 To generate the [Harp Python](https://harp-tech.org/python) interface instead:
 
-```cmd
+```text
 dotnet harp.toolkit generate interface python
 ```
 
@@ -70,7 +72,7 @@ See [Code Generation](https://harp-tech.org/toolkit/articles/generate.html) for 
 
 `harp.toolkit` can also check a device against the Harp specification, reporting where its behavior departs from the standard and writing the result as a shareable HTML report:
 
-```cmd
+```text
 dotnet harp.toolkit verify --port COM4 --report report.html
 ```
 

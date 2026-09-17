@@ -11,7 +11,7 @@ A verification result records how a device behaved against a stated version of t
 
 A verification needs only the serial port of the device.
 
-```ps1
+```text
 dotnet harp.toolkit verify --port COM3
 ```
 
@@ -20,14 +20,14 @@ Every check reports as passed, failed, skipped or error. A failed check ran to c
 Verification stops at the first request left unanswered for 2000 ms, since a late reply can be matched to a later check, and the console states where the run stopped. The HTML report is still written when `--report` is supplied, and states that the verification is incomplete.
 
 #### Serial port
-```ps1
+```text
 --port <port>
 ```
 
 Name of the serial port used to communicate with the device. This option is required.
 
 #### Detailed results
-```ps1
+```text
 --verbose
 ```
 
@@ -44,7 +44,7 @@ Harp devices do not all implement the same version of the standard, so no single
 A device declares the version it implements in `R_VERSION`. Where that register is absent, unreadable or reads all zeros, the device is held to v1, since a device that predates the register also predates the version field. By default, checks belonging to a version outside that scope are neither run nor listed. A skipped result means a check that was in scope and did not run. The console and the report state how many checks were excluded.
 
 #### Include prerelease checks
-```ps1
+```text
 --prerelease
 ```
 
@@ -54,7 +54,7 @@ Also runs the checks against the next specification revision, which is not yet r
 
 Console output is not an artifact. A report captures one run as a single HTML file that can be attached to an issue or a release.
 
-```ps1
+```text
 dotnet harp.toolkit verify --port COM3 --report report.html
 ```
 
@@ -70,7 +70,7 @@ The report is titled with the device name and opens with a header describing the
 - **Toolkit version** identifies the build of `harp.toolkit` that produced the report, including its source commit.
 
 #### Report path
-```ps1
+```text
 --report <report>
 ```
 
@@ -86,19 +86,19 @@ If the device matches the text at that commit and a check still fails, the check
 
 Supplying a second device as a clock reference enables the alignment checks. Both devices must be connected to the same synchronization clock bus.
 
-```ps1
+```text
 dotnet harp.toolkit verify --port COM3 --clock-port COM4 --pps-event 32
 ```
 
 #### Clock reference port
-```ps1
+```text
 --clock-port <clock-port>
 ```
 
 Serial port of the reference clock device. Supplying it enables the clock alignment checks.
 
 #### Tested device event register
-```ps1
+```text
 --pps-event <pps-event>
 ```
 
@@ -107,7 +107,7 @@ Address of the register on the tested device that reports the incoming pulse fro
 Note that the pulse is a physical output that only some devices produce, and it is distinct both from the synchronization signal on the clock bus and from the software heartbeat. A device reports the pulse through an application register of its own, which is why the address has to be supplied explicitly.
 
 #### Sample count
-```ps1
+```text
 --clock-samples <clock-samples>
 ```
 
@@ -117,12 +117,12 @@ Number of pulse event pairs to collect for the alignment check. The default is 5
 
 A device can also be checked against its own declared interface rather than only against the standard. Supplying the device metadata generates an interface from it, reads every declared register from the live device, and parses each reply with the generated parsers. The identity, firmware and hardware versions declared in the metadata are cross-checked against the values reported by the device.
 
-```ps1
+```text
 dotnet harp.toolkit verify --port COM3 --metadata device.yml
 ```
 
 #### Device metadata
-```ps1
+```text
 --metadata <metadata>
 ```
 

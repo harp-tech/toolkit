@@ -1,5 +1,4 @@
 ﻿using System.CommandLine;
-using System.IO.Ports;
 
 namespace Harp.Toolkit;
 
@@ -10,7 +9,7 @@ public class ListCommand : Command
     {
         SetAction(parseResult =>
         {
-            var portNames = SerialPort.GetPortNames();
+            var portNames = PortDiscovery.GetCandidatePortNames();
             Console.WriteLine($"PortNames: [{string.Join(", ", portNames)}]");
         });
     }

@@ -37,26 +37,35 @@ public static class Bootloader
     /// is in an invalid state.
     /// </param>
     /// <param name="timeout">The time to wait, in milliseconds, for the device to answer a Harp command.</param>
-    /// <param name="progress">The optional <see cref="IProgress{Int32}"/> object used to report update progress.</param>
+    /// <param name="progress">The optional object that receives update progress reports.</param>
+    /// <param name="cancellationToken">The token that cancels the update.</param>
     /// <returns>
     /// The task object representing the asynchronous firmware update operation.
     /// </returns>
+    /// <remarks>
+    /// The update accepts cancellation only before it resets the device. A device in the
+    /// bootloader stays there until an update completes, so the update ignores the token from
+    /// the <see cref="UpdateStage.Reset"/> stage onwards.
+    /// </remarks>
     public static async Task UpdateFirmwareAsync(
         string portName,
         DeviceFirmware firmware,
         bool forceUpdate,
         int timeout,
-        IProgress<int>? progress = default)
+        IProgress<UpdateProgress>? progress = default,
+        CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+        progress?.Report(new(UpdateStage.Connect, 0));
         try
         {
             using (var device = new AsyncDevice(portName))
             {
-                progress?.Report(10);
+                progress?.Report(new(UpdateStage.Check, 10));
                 if (!forceUpdate)
                 {
-                    var hardwareVersion = await device.ReadHardwareVersionAsync().WithTimeout(timeout);
-                    var deviceName = await device.ReadDeviceNameAsync().WithTimeout(timeout);
+                    var hardwareVersion = await device.ReadHardwareVersionAsync(cancellationToken).WithTimeout(timeout);
+                    var deviceName = await device.ReadDeviceNameAsync(cancellationToken).WithTimeout(timeout);
                     if (!firmware.Metadata.Supports(deviceName, hardwareVersion))
                     {
                         throw new HarpException(
@@ -66,7 +75,8 @@ public static class Bootloader
                     }
                 }
 
-                progress?.Report(20);
+                cancellationToken.ThrowIfCancellationRequested();
+                progress?.Report(new(UpdateStage.Reset, 20));
                 var reset = await device.ReadResetDeviceAsync().WithTimeout(timeout);
                 if ((reset & ResetFlags.BootFromEeprom) != 0)
                 {
@@ -88,20 +98,20 @@ public static class Bootloader
         }
 
         await Task.Delay(FlushDelayMilliseconds);
-        progress?.Report(30);
 
         const int MaxAttempts = 3;
         for (int i = 1; i <= MaxAttempts; i++)
         {
             try
             {
+                progress?.Report(new(UpdateStage.Bootloader, 30));
                 using (var bootloader = new SerialPort(portName, DefaultBaudRate, Parity.None, 8, StopBits.One))
                 {
                     bootloader.Handshake = Handshake.None;
                     bootloader.Open();
                     await Task.Delay(FlushDelayMilliseconds);
                     var pageSize = await ReadPageSizeAsync(bootloader.BaseStream);
-                    progress?.Report(40);
+                    progress?.Report(new(UpdateStage.Write, 40));
 
                     var bytesWritten = 0;
                     var reportSize = pageSize * 8;
@@ -113,14 +123,15 @@ public static class Bootloader
                         bytesWritten += pageSize;
                         if (bytesWritten % reportSize == 0)
                         {
-                            progress?.Report(40 + bytesWritten * 50 / firmware.Data.Length);
+                            var percent = 40 + bytesWritten * 50 / firmware.Data.Length;
+                            progress?.Report(new(UpdateStage.Write, percent));
                         }
                     }
 
-                    progress?.Report(90);
+                    progress?.Report(new(UpdateStage.Restart, 90));
                     CreateBootloaderMessage(dataMessage, ExitBootloader, 0, firmware.Data, 0, pageSize);
                     await BootloaderCommandAsync(bootloader.BaseStream, dataMessage);
-                    progress?.Report(100);
+                    progress?.Report(new(UpdateStage.Restart, 100));
                     break;
                 };
             }

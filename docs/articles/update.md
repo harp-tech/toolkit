@@ -11,44 +11,52 @@ Devices built on the Pico core are not currently supported. They update through 
 
 An update needs the serial port and a firmware image.
 
-```ps1
+```text
 dotnet harp.toolkit update --port COM3 Behavior-fw3.3-harp1.15-hw2.0-ass0.hex
 ```
 
-The command reads the device name and hardware version, checks that the image is compatible, resets the device into its bootloader, writes the image one page at a time, and then leaves the bootloader so the new firmware starts. Progress is reported as a percentage while the image is written.
+The command reads the device name and hardware version, checks that the image is compatible, resets the device into its bootloader, writes the image one page at a time, and then leaves the bootloader so the new firmware starts. Progress reports the current stage alongside a percentage for the whole update. Only a retry of the bootloader decreases the percentage.
 
-A device takes a moment to answer Harp again once an update finishes, measured at a median of about two seconds and occasionally over ten. A tool that reconnects immediately may find the device unresponsive and should retry before treating it as a failure.
+A device takes a moment to answer Harp again once an update finishes, measured at a median of about two seconds and occasionally over ten. The command waits for the device to answer, for up to twenty seconds, so a successful run ends with the device ready. Any other tool that connects to the device straight after an update may find the device unresponsive and should wait in the same way before treating silence as a failure.
 
 #### Firmware image
-```ps1
+```text
 <firmware>
 ```
 
 Path to the firmware image in Intel HEX format. The file must exist, and its name must follow the convention described in [Firmware image names](#firmware-image-names). This argument is required.
 
 #### Serial port
-```ps1
+```text
 --port <port>
 ```
 
 Name of the serial port used to communicate with the device. This option is required.
 
 #### Response timeout
-```ps1
+```text
 --timeout <timeout>
 ```
 
-Time in milliseconds to wait for the device to answer each Harp command. It applies while the update reads the device identity and requests the reset. The default is 2000, and `-1` waits indefinitely. Increase it if the device is slow to answer, for example immediately after an earlier update. It does not affect the bootloader protocol, which uses its own timeout.
+Time in milliseconds to wait for the device to answer each Harp command. It applies while the update reads the device identity and requests the reset. The default is 2000, and `-1` waits indefinitely. Increase it if the device is slow to answer, for example immediately after an earlier update. It does not affect the bootloader protocol or the wait for the device after an update, which have their own timeouts.
+
+### Canceling an update
+
+Ctrl+C cancels an update while it reads the device identity and checks the image. The device is left as it was, and the command reports that the update was canceled before the device was reset.
+
+Once the update resets the device, it ignores the cancellation and runs to completion. The terminal still ends the process after a short grace period, so an update interrupted while writing leaves the device in bootloader mode.
 
 ### Exit code
 
-The command exits 0 once the image is written and the device has left the bootloader, and 1 otherwise. Every failure is reported as a message rather than a stack trace. A failure after the device has been reset also reports the percentage reached.
+The command exits 0 once the image is written and the device answers Harp again, and 1 otherwise. Every failure is reported as a message rather than a stack trace. A failure after the device has been reset also reports the percentage reached.
+
+The command also exits 1 when the device stays silent after the image is written.
 
 ## Firmware image names
 
 The update reads the device and version information from the file name, not from the contents of the image. The name must follow this convention:
 
-```
+```text
 <device>-fw<firmware>-harp<core>-hw<hardware>-ass<assembly>.hex
 ```
 
@@ -64,7 +72,7 @@ The bootloader records that a page was written, and stays in control until an up
 
 A device in that state does not answer Harp commands, so an ordinary update cannot read its identity and cannot reach it. The update detects the condition and reports it:
 
-```
+```text
 The device on the serial port COM3 specified with --port did not respond in time. The device
 is in bootloader mode, left there by an interrupted update. Re-run with --force, which skips
 the compatibility check when the device cannot answer.
@@ -72,14 +80,14 @@ the compatibility check when the device cannot answer.
 
 Repeat the update with `--force` to recover the device.
 
-```ps1
+```text
 dotnet harp.toolkit update --port COM3 --force Behavior-fw3.3-harp1.15-hw2.0-ass0.hex
 ```
 
 If the forced update does not reach the device either, power cycle it first and repeat. A partial page in the receive buffer holds the bootloader until it is reset.
 
 #### Force an update
-```ps1
+```text
 --force
 ```
 
