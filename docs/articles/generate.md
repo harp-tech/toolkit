@@ -30,10 +30,10 @@ A device interface can be generated from the `device.yml` metadata file, in eith
 
 A register or payload member may also declare a `converter`, for an `interfaceType` the generator cannot synthesize from the metadata alone. The implementation is then written by hand and referenced by the generated code.
 
-The .NET interface is the default target. The language can also be named explicitly, and a metadata path given on the command line precedes it.
+The target language is always named, and an optional metadata path follows it. Without a path the generator reads `device.yml` from the current directory.
 
 ```text
-dotnet harp.toolkit generate interface path/to/device.yml csharp
+dotnet harp.toolkit generate interface csharp path/to/device.yml
 ```
 
 ### .NET interface
@@ -41,7 +41,7 @@ dotnet harp.toolkit generate interface path/to/device.yml csharp
 An interface for reactive programming targeting [Bonsai.Harp](https://harp-tech.org/api/Bonsai.Harp.html).
 
 ```text
-dotnet harp.toolkit generate interface
+dotnet harp.toolkit generate interface csharp
 ```
 
 Registers are additionally exposed as [operators](https://harp-tech.org/articles/operators.html), alongside an asynchronous API for use from .NET applications.
@@ -55,7 +55,7 @@ The following options are available to configure the generated output.
 -ns, --namespace <ns>
 ```
 
-Specifies the namespace for the generated code. The default namespace is `Harp.DeviceName` where `DeviceName` is the name of the device specified in the `device.yml` file. This option applies only to the .NET interface.
+Specifies the namespace for the generated code. The default namespace is `Harp.DeviceName` where `DeviceName` is the name of the device specified in the `device.yml` file.
 
 ### Python interface
 
@@ -67,7 +67,7 @@ dotnet harp.toolkit generate interface python
 
 Custom converters are supplied in a companion `converters` module, which the generated module imports from.
 
-The `--namespace` option does not apply to this target, since the generated module declares no namespace, and is rejected if supplied.
+The `--namespace` option is not available for this target, since the generated module declares no namespace.
 
 ## Generating device firmware code
 
