@@ -57,7 +57,7 @@ See [Firmware Update](https://harp-tech.org/toolkit/articles/update.html) for th
 `harp.toolkit` can also generate device interface and firmware code from a `device.yml` metadata file. With a `device.yml` in the current directory, the following generates the .NET device interface, targeting [Bonsai.Harp](https://harp-tech.org/api/Bonsai.Harp.html):
 
 ```text
-dotnet harp.toolkit generate interface
+dotnet harp.toolkit generate interface csharp
 ```
 
 To generate the [Harp Python](https://harp-tech.org/python) interface instead:

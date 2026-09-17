@@ -5,18 +5,14 @@ namespace Harp.Toolkit.Generate;
 
 class GeneratePythonInterfaceCommand : Command
 {
-    public GeneratePythonInterfaceCommand(
-        Argument<FileInfo> metadataPathArgument,
-        Option<string> namespaceOption,
-        Option<DirectoryInfo> outputPathOption)
+    public GeneratePythonInterfaceCommand()
         : base("python", "Generate the Harp Python device interface.")
     {
-        Validators.Add(commandResult =>
-        {
-            var namespaceResult = commandResult.GetResult(namespaceOption);
-            if (namespaceResult is not null && !namespaceResult.Implicit)
-                commandResult.AddError("The --namespace option does not apply to the Python interface.");
-        });
+        MetadataPathArgument metadataPathArgument = new();
+        OutputPathOption outputPathOption = new();
+
+        Arguments.Add(metadataPathArgument);
+        Options.Add(outputPathOption);
 
         SetAction(parseResult =>
         {
