@@ -1,25 +1,11 @@
 ﻿using System.CodeDom.Compiler;
 using System.Text;
 using Harp.Generators;
-using YamlDotNet.Core;
 
 namespace Harp.Toolkit.Generate;
 
 public static class GeneratorHelper
 {
-    public static DeviceMetadata ReadDeviceMetadata(string path)
-    {
-        using var reader = new StreamReader(path);
-        var parser = new MergingParser(new Parser(reader));
-        return MetadataDeserializer.Instance.Deserialize<DeviceMetadata>(parser);
-    }
-
-    public static Dictionary<string, PortPinInfo> ReadPortPinMetadata(string path)
-    {
-        using var reader = new StreamReader(path);
-        return MetadataDeserializer.Instance.Deserialize<Dictionary<string, PortPinInfo>>(reader);
-    }
-
     public static IEnumerable<KeyValuePair<string, T>> GetPortPinsOfType<T>(IDictionary<string, PortPinInfo> portPins) where T : PortPinInfo
     {
         return from item in portPins

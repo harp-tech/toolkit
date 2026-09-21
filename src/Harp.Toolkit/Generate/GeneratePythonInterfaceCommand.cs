@@ -19,7 +19,7 @@ class GeneratePythonInterfaceCommand : Command
             var outputPath = parseResult.GetRequiredValue(outputPathOption);
             var metadataPath = parseResult.GetRequiredValue(metadataPathArgument);
 
-            var deviceMetadata = GeneratorHelper.ReadDeviceMetadata(metadataPath.FullName);
+            var deviceMetadata = DeviceMetadata.Load(metadataPath.FullName);
             var generator = new PythonGenerator(deviceMetadata);
             var implementation = generator.GenerateImplementation();
             if (GeneratorHelper.AssertNoGeneratorErrors(generator.Errors))
