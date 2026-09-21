@@ -29,8 +29,8 @@ class GenerateFirmwareCommand : Command
             var iosMetadataFileName = parseResult.GetRequiredValue(iosMetadataPathOption).FullName;
             var generateImplementation = parseResult.GetValue(generateImplementationOption);
 
-            var deviceMetadata = GeneratorHelper.ReadDeviceMetadata(registerMetadataFileName);
-            var portPinMetadata = GeneratorHelper.ReadPortPinMetadata(iosMetadataFileName);
+            var deviceMetadata = DeviceMetadata.Load(registerMetadataFileName);
+            var portPinMetadata = PortPinMetadata.Load(iosMetadataFileName);
             var generator = new FirmwareGenerator(deviceMetadata, portPinMetadata);
             var headers = generator.GenerateHeaders();
             var implementation = generateImplementation ? generator.GenerateImplementation() : default;

@@ -3,7 +3,6 @@ using System.Reflection;
 using Spectre.Console;
 using Harp.Generators;
 using Harp.Toolkit.Verify.Suites;
-using Harp.Toolkit.Generate;
 
 namespace Harp.Toolkit.Verify;
 public class VerifyCommand : Command
@@ -93,7 +92,7 @@ public class VerifyCommand : Command
         if (metadataPath is not null)
         {
             AnsiConsole.Markup($"Loading device metadata from [bold]{metadataPath.FullName}[/]...");
-            deviceMetadata = GeneratorHelper.ReadDeviceMetadata(metadataPath.FullName);
+            deviceMetadata = DeviceMetadata.Load(metadataPath.FullName);
             deviceRawYaml = await File.ReadAllTextAsync(metadataPath.FullName, cancellationToken);
             AnsiConsole.MarkupLine($" [green]Done![/] ({deviceMetadata.Registers.Count} registers)");
         }

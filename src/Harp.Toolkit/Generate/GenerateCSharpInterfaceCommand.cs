@@ -25,7 +25,7 @@ class GenerateCSharpInterfaceCommand : Command
             var metadataPath = parseResult.GetRequiredValue(metadataPathArgument);
             var ns = parseResult.GetValue(namespaceOption);
 
-            var deviceMetadata = GeneratorHelper.ReadDeviceMetadata(metadataPath.FullName);
+            var deviceMetadata = DeviceMetadata.Load(metadataPath.FullName);
             var generator = new InterfaceGenerator(deviceMetadata, ns ?? $"Harp.{deviceMetadata.Device}");
             var implementation = generator.GenerateImplementation();
             if (GeneratorHelper.AssertNoGeneratorErrors(generator.Errors))
