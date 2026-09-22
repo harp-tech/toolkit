@@ -15,7 +15,7 @@ class GenerateRegisterMetadataCommand : Command
         Argument<FileInfo> registerWorksheetPathArgument = ArgumentValidation.AcceptExistingOnly(
             new Argument<FileInfo>("registers.xls")
             {
-                Description = "The path to the file describing the device registers.",
+                Description = "The path to the file that describes the device registers.",
                 Arity = ArgumentArity.ExactlyOne
             });
 

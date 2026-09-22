@@ -33,7 +33,7 @@ public class VerifyCommand : Command
 
         Option<int?> ppsEventOption = new("--pps-event")
         {
-            Description = "Address of the register on the tested device (--port) that reports the incoming PPS pulse from the reference clock device. Enables the PPS alignment test, which also requires --clock-port.",
+            Description = "Address of the register on the tested device, given by --port, that reports the incoming PPS pulse from the reference clock device. Enables the PPS alignment test, which also requires --clock-port.",
             Required = false,
         };
 
@@ -51,7 +51,7 @@ public class VerifyCommand : Command
 
         Option<FileInfo> metadataOption = new("--metadata")
         {
-            Description = "The path to the file describing the device registers. Enables validation of the generated interface against a live read of every declared register, and cross-checks the WhoAmI, firmware and hardware versions.",
+            Description = "The path to the file that describes the device registers. Enables validation of the generated interface against a live read of every declared register, and cross-checks the WhoAmI, firmware and hardware versions.",
             Required = false,
         };
         OptionValidation.AcceptExistingOnly(metadataOption);
@@ -92,8 +92,8 @@ public class VerifyCommand : Command
         if (metadataPath is not null)
         {
             AnsiConsole.Markup($"Loading device metadata from [bold]{metadataPath.FullName}[/]...");
-            deviceMetadata = DeviceMetadata.Load(metadataPath.FullName);
             deviceRawYaml = await File.ReadAllTextAsync(metadataPath.FullName, cancellationToken);
+            deviceMetadata = DeviceMetadata.Parse(deviceRawYaml);
             AnsiConsole.MarkupLine($" [green]Done![/] ({deviceMetadata.Registers.Count} registers)");
         }
 

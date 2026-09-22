@@ -1,18 +1,10 @@
 ﻿using System.CodeDom.Compiler;
 using System.Text;
-using Harp.Generators;
 
 namespace Harp.Toolkit.Generate;
 
 public static class GeneratorHelper
 {
-    public static IEnumerable<KeyValuePair<string, T>> GetPortPinsOfType<T>(IDictionary<string, PortPinInfo> portPins) where T : PortPinInfo
-    {
-        return from item in portPins
-               where item.Value is T
-               select new KeyValuePair<string, T>(item.Key, (T)item.Value);
-    }
-
     public static bool AssertNoGeneratorErrors(CompilerErrorCollection errors)
     {
         if (errors.Count > 0)
