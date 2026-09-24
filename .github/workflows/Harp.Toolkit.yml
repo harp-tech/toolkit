@@ -61,20 +61,20 @@ jobs:
     steps:
       # ----------------------------------------------------------------------- Checkout
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
       # ----------------------------------------------------------------------- Set up tools
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.x
 
       # ----------------------------------------------------------------------- Configure build
       - name: Configure build
         id: configure-build
-        uses: bonsai-rx/configure-build@v1
+        uses: bonsai-rx/configure-build@v2
 
       # ----------------------------------------------------------------------- Build
       - name: Restore
@@ -94,7 +94,7 @@ jobs:
 
       # ----------------------------------------------------------------------- Collect artifacts
       - name: Collect NuGet packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: matrix.collect-packages && steps.pack.outcome == 'success' && always()
         with:
           name: Packages
@@ -114,13 +114,13 @@ jobs:
     steps:
       # ----------------------------------------------------------------------- Checkout
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
       # ----------------------------------------------------------------------- Set up tools
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.x
 
@@ -130,7 +130,7 @@ jobs:
       # ----------------------------------------------------------------------- Configure build
       - name: Configure build
         id: configure-build
-        uses: bonsai-rx/configure-build@v1
+        uses: bonsai-rx/configure-build@v2
 
       # ----------------------------------------------------------------------- Restore
       - name: Restore
@@ -148,7 +148,7 @@ jobs:
 
       # ----------------------------------------------------------------------- Collect artifacts
       - name: Collect documentation metadata
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: steps.build-metadata.outcome == 'success' && always()
         with:
           name: DocumentationMetadata
@@ -156,7 +156,7 @@ jobs:
           path: artifacts/docs/api/
 
       - name: Collect documentation artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: steps.build-documentation.outcome == 'success' && always()
         with:
           name: DocumentationWebsite
@@ -184,13 +184,13 @@ jobs:
     steps:
       # ----------------------------------------------------------------------- Set up .NET
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.x
 
       # ----------------------------------------------------------------------- Download built packages
       - name: Download built packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Packages
           path: artifacts/packages/
@@ -226,13 +226,13 @@ jobs:
     steps:
       # ----------------------------------------------------------------------- Set up .NET
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.x
 
       # ----------------------------------------------------------------------- Download built packages
       - name: Download built packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Packages
           path: artifacts/packages/
@@ -275,17 +275,17 @@ jobs:
     steps:
       # ----------------------------------------------------------------------- Download documentation website components
       - name: Download documentation website
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: DocumentationWebsite
 
       # ----------------------------------------------------------------------- Collect artifacts
       - name: Upload final documentation website artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: '.'
 
       # ----------------------------------------------------------------------- Publish to GitHub Pages
       - name: Publish to GitHub Pages
         id: publish
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
