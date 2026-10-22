@@ -66,6 +66,9 @@ An image built for a range of hardware revisions states `x` in place of a hardwa
 
 The update refuses an image when the device name does not match the connected device, or when the device does not satisfy the hardware version. The message names both sides, so the mismatch is visible without opening the file.
 
+> [!Note]
+> A device with a coprocessor, such as the SoundCard, publishes a second image in each release, with a `.PIC32` suffix after the device name, or `.X` in older releases. The update writes both images, and requires the coprocessor image to sit next to the firmware image under the same name with the suffix.
+
 ## Recovering a device in bootloader mode
 
 The bootloader records that a page was written, and stays in control until an update completes. That record survives a power cycle. A disconnected cable or a closed terminal can therefore leave the device in bootloader mode, without going back to the firmware it had before.

@@ -124,6 +124,39 @@ public class TestPIC32Bootloader
     }
 
     [TestMethod]
+    [DataRow(TestAssetHelper.SoundCardImageFw20)]
+    [DataRow(TestAssetHelper.SoundCardImageFw22)]
+    public async Task ProgramFlash_ResetVectorLastInterrupted_ResetVectorErased(string fileName)
+    {
+        // The SoundCard bootloader starts the application once its reset address is programmed,
+        // so an interrupted update stays recoverable only while it is erased
+        const uint ResetAddress = 0x9D001970;
+        var image = RequireImage(fileName).WithRecordLast(ResetAddress);
+        using var device = new PIC32BootloaderEmulator { SilentProgramFrame = 2 };
+        var bootloader = new Bootloader(device);
+
+        await Assert.ThrowsExactlyAsync<TimeoutException>(() => UpdateAsync(bootloader, image));
+
+        var resetVector = device.Flash.Skip((int)(ResetAddress - FirmwareImage.FlashStart)).Take(4).ToArray();
+        CollectionAssert.AreEqual(new byte[] { 0xFF, 0xFF, 0xFF, 0xFF }, resetVector);
+    }
+
+    [TestMethod]
+    [DataRow(TestAssetHelper.SoundCardImageFw20)]
+    [DataRow(TestAssetHelper.SoundCardImageFw22)]
+    public async Task Update_ResetVectorLast_DeviceChecksumMatchesImage(string fileName)
+    {
+        var image = RequireImage(fileName).WithRecordLast(0x9D001970);
+        using var device = new PIC32BootloaderEmulator();
+        var bootloader = new Bootloader(device);
+
+        await UpdateAsync(bootloader, image);
+
+        Assert.IsTrue(await bootloader.VerifyAsync(image));
+        Assert.AreEqual(0, device.UnerasedWrites);
+    }
+
+    [TestMethod]
     public async Task JumpToApplication_NoReply_Completes()
     {
         using var device = new PIC32BootloaderEmulator();

@@ -3,6 +3,7 @@ using Spectre.Console;
 using Spectre.Console.Rendering;
 using Harp.Toolkit.Firmware;
 using Harp.Toolkit.Firmware.ATxmega;
+using Harp.Toolkit.Firmware.SoundCard;
 
 namespace Harp.Toolkit;
 
@@ -20,6 +21,14 @@ public class UpdateFirmwareCommand : Command
         "The update may have left the device in bootloader mode. Run the update again, and if the " +
         "device does not respond, power cycle it and re-run with --force, since a device in " +
         "bootloader mode cannot report its identity for the compatibility check.";
+
+    const string InterruptedCoprocessorHint =
+        "The device does not answer Harp commands while the coprocessor is in its bootloader. " +
+        "Re-run the update with --force, or power cycle the device and run the update again.";
+
+    const string SilentCoprocessorHint =
+        "A device whose coprocessor update was interrupted stays silent until it is power cycled " +
+        "or the update is re-run with --force.";
 
     const string NoResponseHint =
         "No device answered the bootloader protocol. The device can still be restarting from a " +
@@ -59,6 +68,37 @@ public class UpdateFirmwareCommand : Command
         {
             return new Markup(Markup.Escape(task.Description)).Overflow(Overflow.Ellipsis).LeftJustified();
         }
+    }
+
+    sealed class ProgressTracker
+    {
+        public bool EnteredBootloader { get; private set; }
+
+        public int Percent { get; private set; }
+
+        public void Report(UpdateProgress update)
+        {
+            EnteredBootloader |= update.Stage == UpdateStage.Bootloader;
+            Percent = update.Percent;
+        }
+    }
+
+    static Task ShowProgressAsync(ProgressTracker tracker, Func<IProgress<UpdateProgress>, Task> update)
+    {
+        return AnsiConsole.Progress().AutoClear(true).Columns(
+            new StageColumn(),
+            new ProgressBarColumn(),
+            new PercentageColumn()).StartAsync(async context =>
+        {
+            var task = context.AddTask("Updating firmware");
+            var progress = new ImmediateProgress<UpdateProgress>(update =>
+            {
+                tracker.Report(update);
+                task.Description = DescribeStage(update.Stage);
+                task.Value = update.Percent;
+            });
+            await update(progress);
+        });
     }
 
     static bool TryDescribeInterruption(Exception exception, int percent, out string message)
@@ -138,55 +178,99 @@ public class UpdateFirmwareCommand : Command
                     return 1;
                 }
 
-                if (!FirmwareMetadata.TryParse(Path.GetFileNameWithoutExtension(firmwarePath.Name), out var metadata))
+                var firmwareName = Path.GetFileNameWithoutExtension(firmwarePath.Name);
+                if (!FirmwareMetadata.TryParse(firmwareName, out var metadata))
                 {
+                    if (CoprocessorFirmware.TryParseMetadata(firmwareName, out _))
+                    {
+                        Console.Error.WriteLine(
+                            $"The firmware file {firmwarePath.Name} is a coprocessor image. Specify the main " +
+                            "firmware image instead.");
+                        return 1;
+                    }
+
                     Console.Error.WriteLine(
                         $"The name of the firmware file {firmwarePath.Name} does not follow the Harp convention. " +
                         $"{FirmwareNameHint}");
                     return 1;
                 }
 
+                string? coprocessorPath = null;
+                if (metadata.DeviceName == Coprocessor.DeviceName)
+                {
+                    var coprocessorPaths = CoprocessorFirmware.GetPathsFor(firmwarePath.FullName);
+                    coprocessorPath = coprocessorPaths.FirstOrDefault(File.Exists);
+                    if (coprocessorPath is null)
+                    {
+                        var expectedNames = string.Join(" or ", coprocessorPaths.Select(Path.GetFileName));
+                        Console.Error.WriteLine(
+                            $"Updating {Coprocessor.DeviceName} firmware also writes its coprocessor image, " +
+                            $"which must sit next to {firmwarePath.Name} as {expectedNames}.");
+                        return 1;
+                    }
+                }
+
                 DeviceFirmware firmware;
+                CoprocessorFirmware? coprocessorFirmware = null;
+                var imagePath = firmwarePath.FullName;
                 try
                 {
-                    firmware = DeviceFirmware.FromFile(metadata, firmwarePath.FullName);
+                    firmware = DeviceFirmware.FromFile(metadata, imagePath);
+                    if (coprocessorPath is not null)
+                    {
+                        imagePath = coprocessorPath;
+                        coprocessorFirmware = CoprocessorFirmware.FromFile(metadata, coprocessorPath);
+                    }
                 }
                 catch (Exception ex) when (ex is ArgumentException or NotSupportedException)
                 {
                     Console.Error.WriteLine(
-                        $"The firmware file {firmwarePath.Name} is not a valid Intel HEX image. {ex.Message}");
+                        $"The firmware file {Path.GetFileName(imagePath)} is not a valid Intel HEX image. {ex.Message}");
                     return 1;
                 }
 
+                if (coprocessorFirmware is not null)
+                {
+                    Console.WriteLine(Path.GetFileNameWithoutExtension(coprocessorPath));
+                    var coprocessorTracker = new ProgressTracker();
+                    try
+                    {
+                        await ShowProgressAsync(coprocessorTracker, progress => Coprocessor.UpdateFirmwareAsync(
+                            portName, coprocessorFirmware, forceUpdate, portTimeout, progress, cancellationToken));
+                    }
+                    catch (OperationCanceledException) when (!coprocessorTracker.EnteredBootloader)
+                    {
+                        Console.Error.WriteLine("The update was canceled before the device was reset.");
+                        return 1;
+                    }
+                    catch (Exception ex) when (coprocessorTracker.EnteredBootloader &&
+                                               TryDescribeInterruption(ex, coprocessorTracker.Percent, out var interruption))
+                    {
+                        Console.Error.WriteLine($"{interruption} {InterruptedCoprocessorHint}");
+                        return 1;
+                    }
+                    catch (TimeoutException ex) when (!forceUpdate &&
+                                                     portNameOption.TryDescribe(ex, portName, out var cause))
+                    {
+                        Console.Error.WriteLine($"{cause} {SilentCoprocessorHint}");
+                        return 1;
+                    }
+                }
+
                 Console.WriteLine($"{firmware.Metadata}");
-                var enteredBootloader = false;
-                var lastPercent = 0;
+                var tracker = new ProgressTracker();
                 try
                 {
-                    await AnsiConsole.Progress().AutoClear(true).Columns(
-                        new StageColumn(),
-                        new ProgressBarColumn(),
-                        new PercentageColumn()).StartAsync(async context =>
-                    {
-                        var task = context.AddTask("Updating firmware");
-                        var progress = new ImmediateProgress<UpdateProgress>(update =>
-                        {
-                            enteredBootloader |= update.Stage == UpdateStage.Bootloader;
-                            lastPercent = update.Percent;
-                            task.Description = DescribeStage(update.Stage);
-                            task.Value = update.Percent;
-                        });
-                        await Bootloader.UpdateFirmwareAsync(
-                            portName, firmware, forceUpdate, portTimeout, progress, cancellationToken);
-                    });
+                    await ShowProgressAsync(tracker, progress => Bootloader.UpdateFirmwareAsync(
+                        portName, firmware, forceUpdate, portTimeout, progress, cancellationToken));
                 }
-                catch (OperationCanceledException) when (!enteredBootloader)
+                catch (OperationCanceledException) when (!tracker.EnteredBootloader)
                 {
                     Console.Error.WriteLine("The update was canceled before the device was reset.");
                     return 1;
                 }
-                catch (Exception ex) when (enteredBootloader &&
-                                           TryDescribeInterruption(ex, lastPercent, out var interruption))
+                catch (Exception ex) when (tracker.EnteredBootloader &&
+                                           TryDescribeInterruption(ex, tracker.Percent, out var interruption))
                 {
                     Console.Error.WriteLine($"{interruption} {InterruptedUpdateHint}");
                     return 1;

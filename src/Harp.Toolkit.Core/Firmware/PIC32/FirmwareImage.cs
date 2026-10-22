@@ -184,6 +184,84 @@ public sealed class FirmwareImage
         return new FirmwareImage(records, startAddress, (uint)flash.Length, Crc16.Compute(flash));
     }
 
+    /// <summary>
+    /// Returns a copy of the image that programs the data record holding the specified address
+    /// after every other record.
+    /// </summary>
+    /// <param name="address">An address in application flash, such as the reset address of the application.</param>
+    /// <returns>
+    /// A new <see cref="FirmwareImage"/> object whose last data record holds <paramref name="address"/>,
+    /// or the current image if no data record holds it.
+    /// </returns>
+    /// <remarks>
+    /// A bootloader that starts the application whenever its reset address is programmed can
+    /// recover from an interrupted update only while that address is still erased. The moved
+    /// record follows an extended linear address record, so it programs the same flash as before.
+    /// </remarks>
+    public FirmwareImage WithRecordLast(uint address)
+    {
+        var baseAddress = 0u;
+        for (int i = 0; i < Records.Count; i++)
+        {
+            var record = Records[i].Span;
+            switch ((RecordType)record[3])
+            {
+                case RecordType.ExtendedSegmentAddress:
+                    baseAddress = (uint)((record[4] << 8) | record[5]) << 4;
+                    break;
+                case RecordType.ExtendedLinearAddress:
+                    baseAddress = (uint)((record[4] << 8) | record[5]) << 16;
+                    break;
+                case RecordType.Data:
+                    var recordAddress = baseAddress + (uint)((record[1] << 8) | record[2]);
+                    var start = recordAddress | KernelSegment0;
+                    if (address >= start && address < start + record[0])
+                    {
+                        return MoveRecordLast(i, recordAddress);
+                    }
+                    break;
+            }
+        }
+
+        return this;
+    }
+
+    FirmwareImage MoveRecordLast(int index, uint recordAddress)
+    {
+        var data = Records[index].Slice(4, Records[index].Span[0]).ToArray();
+        var records = new List<ReadOnlyMemory<byte>>(Records.Count + 1);
+        for (int i = 0; i < Records.Count - 1; i++)
+        {
+            if (i != index)
+            {
+                records.Add(Records[i]);
+            }
+        }
+
+        records.Add(CreateRecord(RecordType.ExtendedLinearAddress, 0, (byte)(recordAddress >> 24), (byte)(recordAddress >> 16)));
+        records.Add(CreateRecord(RecordType.Data, (ushort)recordAddress, data));
+        records.Add(Records[Records.Count - 1]);
+        return new FirmwareImage(records, StartAddress, Length, Crc);
+    }
+
+    static byte[] CreateRecord(RecordType type, ushort address, params byte[] data)
+    {
+        var record = new byte[data.Length + 5];
+        record[0] = (byte)data.Length;
+        record[1] = (byte)(address >> 8);
+        record[2] = (byte)address;
+        record[3] = (byte)type;
+        data.CopyTo(record, 4);
+        var checksum = 0;
+        for (int i = 0; i < record.Length - 1; i++)
+        {
+            checksum += record[i];
+        }
+
+        record[record.Length - 1] = (byte)-checksum;
+        return record;
+    }
+
     enum RecordType : byte
     {
         Data = 0,

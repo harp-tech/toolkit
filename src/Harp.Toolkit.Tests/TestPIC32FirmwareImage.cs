@@ -49,6 +49,43 @@ public class TestPIC32FirmwareImage
     }
 
     [TestMethod]
+    public void WithRecordLast_AddressInRecord_MovesRecordBeforeEndOfFile()
+    {
+        var image = CreateImage(
+            LinearAddress(0x1D00),
+            Record(Data, 0x0000, 0x11),
+            Record(Data, 0x0010, 0x22),
+            Record(Data, 0x0020, 0x33),
+            Record(EndOfFile, 0));
+        var expected = CreateImage(
+            LinearAddress(0x1D00),
+            Record(Data, 0x0000, 0x11),
+            Record(Data, 0x0020, 0x33),
+            LinearAddress(0x1D00),
+            Record(Data, 0x0010, 0x22),
+            Record(EndOfFile, 0));
+
+        var reordered = image.WithRecordLast(0x9D000010);
+
+        Assert.HasCount(expected.Records.Count, reordered.Records);
+        for (int i = 0; i < expected.Records.Count; i++)
+        {
+            CollectionAssert.AreEqual(expected.Records[i].ToArray(), reordered.Records[i].ToArray());
+        }
+
+        Assert.AreEqual(image.StartAddress, reordered.StartAddress);
+        Assert.AreEqual(image.Length, reordered.Length);
+        Assert.AreEqual(image.Crc, reordered.Crc);
+    }
+
+    [TestMethod]
+    public void WithRecordLast_AddressInNoRecord_ReturnsSameImage()
+    {
+        var image = CreateImage(LinearAddress(0x1D00), Record(Data, 0x0000, 0x11), Record(EndOfFile, 0));
+        Assert.AreSame(image, image.WithRecordLast(0x9D000010));
+    }
+
+    [TestMethod]
     public void FromStream_InvalidRecordChecksum_RaisesArgumentException()
     {
         var record = Record(Data, 0x0000, 0x11);
