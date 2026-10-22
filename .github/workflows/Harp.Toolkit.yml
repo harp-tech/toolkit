@@ -28,6 +28,10 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_GENERATE_ASPNET_CERTIFICATE: false
   ContinuousIntegrationBuild: true
+  SOUNDCARD_FW20_URL: https://github.com/harp-tech/device.soundcard/releases/download/fw2.0-harp1.4/SoundCard.X-fw2.0-harp1.4-hw2.1-ass0.hex
+  SOUNDCARD_FW20_SHA256: 9e8489c38068964f94013561426c1d492e6620f653db2360fecb3c807d42dcf9
+  SOUNDCARD_FW22_URL: https://github.com/harp-tech/device.soundcard/releases/download/fw2.2-harp1.13/SoundCard.PIC32-fw2.2-harp1.13-hw2.2-ass0.hex
+  SOUNDCARD_FW22_SHA256: b3e363be49e080bf4083921758648c1ab2b9a8dde7b85556d9f3f083b998494f
 jobs:
   # =====================================================================================================================================================================
   # Build, test, and package .NET
@@ -89,6 +93,16 @@ jobs:
         run: dotnet pack --no-restore --no-build --configuration ${{matrix.configuration}}
 
       # ----------------------------------------------------------------------- Test
+      - name: Download test assets
+        shell: bash
+        run: |
+          mkdir -p test-assets
+          curl --fail --silent --show-error --location --output "test-assets/$(basename "$SOUNDCARD_FW20_URL")" "$SOUNDCARD_FW20_URL"
+          curl --fail --silent --show-error --location --output "test-assets/$(basename "$SOUNDCARD_FW22_URL")" "$SOUNDCARD_FW22_URL"
+          echo "$SOUNDCARD_FW20_SHA256 test-assets/$(basename "$SOUNDCARD_FW20_URL")" | sha256sum --check --strict
+          echo "$SOUNDCARD_FW22_SHA256 test-assets/$(basename "$SOUNDCARD_FW22_URL")" | sha256sum --check --strict
+          echo "HARP_TOOLKIT_TEST_ASSETS=$GITHUB_WORKSPACE/test-assets" >> "$GITHUB_ENV"
+
       - name: Test .NET 8
         run: dotnet test --no-restore --no-build --configuration ${{matrix.configuration}} --verbosity normal --framework net8.0
 
