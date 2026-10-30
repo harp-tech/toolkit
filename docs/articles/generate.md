@@ -2,6 +2,12 @@
 
 `harp.toolkit` can be used to automatically generate firmware and interface code from device metadata.
 
+## Generating code in the browser
+
+The [Harp.Toolkit Code Generator](https://harp-tech.org/generators-web/) runs the same generators in the browser, with nothing to install. Pick a device from the [whoami registry](https://github.com/harp-tech/whoami), or paste, open, or drop a `device.yml`, and download the generated C#, Python and firmware code. An `ios.yml` can be added to include the device IO pins in the firmware.
+
+<iframe src="https://harp-tech.org/generators-web/" title="Harp.Toolkit Code Generator" allow="clipboard-write" loading="lazy" style="width: 100%; height: 720px; border: 1px solid var(--bs-border-color); border-radius: 8px;"></iframe>
+
 ## Editing device metadata
 
 1. Install [Visual Studio Code](https://code.visualstudio.com/)
