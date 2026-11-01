@@ -23,8 +23,8 @@ static class PortErrors
         }
         catch (Exception ex) when (portOption.TryDescribe(ex, portName, out var message))
         {
-            Console.Error.WriteLine(message);
-            return 1;
+            ex.SetDescription(message);
+            throw;
         }
     }
 
