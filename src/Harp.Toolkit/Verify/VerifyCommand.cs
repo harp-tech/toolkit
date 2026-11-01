@@ -49,12 +49,7 @@ public class VerifyCommand : Command
                 result.AddError("The number of clock samples must be greater than zero.");
         });
 
-        Option<FileInfo> metadataOption = new("--metadata")
-        {
-            Description = "The path to the file that describes the device registers. Enables validation of the generated interface against a live read of every declared register, and cross-checks the WhoAmI, firmware and hardware versions.",
-            Required = false,
-        };
-        OptionValidation.AcceptExistingOnly(metadataOption);
+        MetadataPathOption metadataOption = new();
 
         Options.Add(portNameOption);
         Options.Add(fileOption);
@@ -93,7 +88,7 @@ public class VerifyCommand : Command
         {
             AnsiConsole.Markup($"Loading device metadata from [bold]{metadataPath.FullName}[/]...");
             deviceRawYaml = await File.ReadAllTextAsync(metadataPath.FullName, cancellationToken);
-            deviceMetadata = DeviceMetadata.Parse(deviceRawYaml);
+            deviceMetadata = MetadataPathOption.Parse(metadataPath, deviceRawYaml);
             AnsiConsole.MarkupLine($" [green]Done![/] ({deviceMetadata.Registers.Count} registers)");
         }
 

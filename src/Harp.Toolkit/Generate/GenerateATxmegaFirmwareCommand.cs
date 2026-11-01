@@ -25,12 +25,10 @@ class GenerateATxmegaFirmwareCommand : Command
         SetAction(parseResult =>
         {
             var outputPath = parseResult.GetRequiredValue(outputPathOption);
-            var registerMetadataFileName = parseResult.GetRequiredValue(metadataPathArgument).FullName;
-            var iosMetadataFileName = parseResult.GetRequiredValue(iosMetadataPathOption).FullName;
             var generateImplementation = parseResult.GetValue(generateImplementationOption);
 
-            var deviceMetadata = DeviceMetadata.Load(registerMetadataFileName);
-            var portPinMetadata = PortPinMetadata.Load(iosMetadataFileName);
+            var deviceMetadata = metadataPathArgument.Load(parseResult);
+            var portPinMetadata = iosMetadataPathOption.Load(parseResult);
             var generator = new FirmwareGenerator(deviceMetadata, portPinMetadata);
             var headers = generator.GenerateHeaders();
             var implementation = generateImplementation ? generator.GenerateImplementation() : default;
