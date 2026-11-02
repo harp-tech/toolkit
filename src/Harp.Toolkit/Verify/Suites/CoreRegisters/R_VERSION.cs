@@ -57,7 +57,7 @@ internal class R_VERSION : Suite
                 declared.Major == ProtocolReference.PrereleaseMajorVersion,
                 x => x
                     ? $"Version declares protocol {declared}, matching the major version being checked."
-                    : $"Version declares protocol {declared}, but these checks are against major "
+                    : $"Version declares protocol {declared}, but these tests are against major "
                         + $"version {ProtocolReference.PrereleaseMajorVersion}.");
         }
         catch (Exception ex)

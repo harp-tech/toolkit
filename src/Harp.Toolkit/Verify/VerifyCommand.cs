@@ -25,7 +25,7 @@ public class VerifyCommand : Command
 
         Option<bool> prereleaseOption = new("--prerelease")
         {
-            Description = "Include checks against specification text outside the stable baseline.",
+            Description = "Include tests against specification text outside the stable baseline.",
             Required = false,
         };
 
@@ -231,7 +231,7 @@ public class VerifyCommand : Command
 
     static string DescribeAbort(TimeoutException exception, int completedCount, int testCount)
     {
-        return $"{exception.Message} Verification stopped after {completedCount} of {testCount} checks. " +
+        return $"{exception.Message} Verification stopped after {completedCount} of {testCount} tests." +
             "Rerun the verification once the device and the connection are stable.";
     }
 
@@ -285,9 +285,9 @@ public class VerifyCommand : Command
         if (target.IncludePrerelease)
         {
             if (target.Scope == ProtocolScope.V2)
-                return $"Including {count} prerelease checks, which this device declares support for.";
+                return $"Including {count} prerelease tests, which this device declares support for.";
 
-            return $"Including {count} prerelease checks against protocol " +
+            return $"Including {count} prerelease tests against protocol " +
                 $"v{ProtocolReference.PrereleaseMajorVersion}, which this device does not declare.";
         }
 
@@ -310,7 +310,7 @@ public class VerifyCommand : Command
     static string GetRerunHint(int count)
     {
         return count > 0
-            ? $"{count} prerelease checks were not run. Rerun with --prerelease to include them."
+            ? $"{count} prerelease tests were not run. Rerun with --prerelease to include them."
             : string.Empty;
     }
 

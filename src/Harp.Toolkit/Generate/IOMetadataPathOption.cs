@@ -10,7 +10,7 @@ public class IOMetadataPathOption : Option<FileInfo>
         : base("--ios")
     {
         OptionValidation.AcceptExistingOnly(this);
-        Description = "The path to the file that describes the device IO pins.";
+        Description = "Path to the file that describes the device IO pins.";
         DefaultValueFactory = result => result.AcceptExistingOnly(new FileInfo("ios.yml"));
     }
 

@@ -1,13 +1,13 @@
 # Code Generation
 
-`harp.toolkit` can be used to automatically generate firmware code, interface code and reference documentation from device metadata.
+`harp.toolkit` generates firmware code, interface code and reference documentation from device metadata.
 
 ## Editing device metadata
 
-1. Install [Visual Studio Code](https://code.visualstudio.com/)
+1. Install [Visual Studio Code](https://code.visualstudio.com/).
 2. Install the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml).
 
-The device interface can be described using a `device.yml` file. A complete specification of all device registers, including bit masks, group masks, and payload formats needs to be provided.
+The device interface is described in a `device.yml` file. The file must specify every application register of the device, together with the bit masks, group masks and payload formats that the registers use.
 
 ```yaml
 %YAML 1.1
@@ -26,11 +26,11 @@ registers:
 
 ## Generating device interface code
 
-A device interface can be generated from the `device.yml` metadata file, in either of two target languages. In both, the generated code declares a type for every register, together with the enum and payload types they are built from, and a map from register address to type.
+A device interface can be generated from the `device.yml` metadata file, in either of two target languages. In both, the generated code declares a type for every register, together with the enum and payload types that the registers use, and a map from register address to type.
 
 A register or payload member may also declare a `converter`, for an `interfaceType` the generator cannot synthesize from the metadata alone. The implementation is then written by hand and referenced by the generated code.
 
-The target language is always named, and an optional metadata path follows it. Without a path the generator reads `device.yml` from the current directory.
+The target language must be specified, followed by an optional metadata path. Without a path the generator reads `device.yml` from the current directory.
 
 ```text
 dotnet harp.toolkit generate interface csharp path/to/device.yml
@@ -38,7 +38,7 @@ dotnet harp.toolkit generate interface csharp path/to/device.yml
 
 ### .NET interface
 
-An interface for reactive programming targeting [Bonsai.Harp](https://harp-tech.org/api/Bonsai.Harp.html).
+The interface targets [Bonsai.Harp](https://harp-tech.org/api/Bonsai.Harp.html) for reactive programming.
 
 ```text
 dotnet harp.toolkit generate interface csharp
@@ -59,13 +59,13 @@ Specifies the namespace for the generated code. The default namespace is `Harp.D
 
 ### Python interface
 
-An interface targeting [Harp Python](https://harp-tech.org/python).
+The interface targets [Harp Python](https://harp-tech.org/python).
 
 ```text
 dotnet harp.toolkit generate interface python
 ```
 
-Custom converters are supplied in a companion `converters` module, which the generated module imports from.
+Custom converters are supplied in a companion `converters` module, which the generated module imports.
 
 The `--namespace` option is not available for this target, since the generated module declares no namespace.
 
@@ -84,7 +84,7 @@ Device firmware code is generated for a specific Harp core, since firmware typic
 
 The generator writes two kinds of file. The headers are always written, and everything in them follows from `device.yml`, down to the name of every register and mask, so they can be regenerated whenever the metadata changes. The implementation files are written only on request, and give every register a function to fill in. Since the device metadata does not describe the body of each function, the implementation is then written by hand.
 
-The target core is always named, and an optional metadata path follows it. Without a path the generator reads `device.yml` from the current directory.
+The target core must be specified, followed by an optional metadata path. Without a path the generator reads `device.yml` from the current directory.
 
 ```text
 dotnet harp.toolkit generate firmware atxmega path/to/device.yml
@@ -97,21 +97,21 @@ The following options are available.
 --ios <ios>
 ```
 
-Specifies the path to the file that describes the device IO pins. Each entry names a pin with its port, direction and initial state. The generator emits an `init_ios` function that configures the pins, together with read and write macros named after each pin. This file is required, and the default path is `ios.yml` in the current directory.
+Specifies the path to the file that describes the device IO pins. Each entry describes a pin, with its port, direction and initial state. The generator emits an `init_ios` function that configures the pins, together with read and write macros named after each pin. This file is required, and the default path is `ios.yml` in the current directory.
 
 #### Generate implementation stubs
 ```text
 --implementation
 ```
 
-Specifies whether to generate implementation stubs. In general this should be run only when starting development of a new ATxmega device.
+Specifies whether to generate implementation stubs. In general, use this option only to start development of a new ATxmega device.
 
 > [!Warning]
 > This replaces the implementation files, including any code already written into them. Generate into an empty directory to compare against an existing implementation.
 
 ## Generating device documentation
 
-Device reference documentation is generated from the same `device.yml` file as the device interface, with one page for each public register. Each page shows the details of the register, such as address, payload type, access, default value and range, followed by the members of its payload and the values of every mask that it uses. All content is generated for a specific site generator. Currently, [docfx](https://dotnet.github.io/docfx/) is the only supported site generator.
+Device reference documentation is generated from the same `device.yml` file as the device interface, with one page for each public register. Each page shows the details of the register, such as address, payload type, access, default value and range, followed by the members of its payload and the values of every mask that the register uses. All content is generated for a specific site generator. Currently, [docfx](https://dotnet.github.io/docfx/) is the only supported site generator.
 
 The target site generator must be specified, followed by an optional metadata path. Without a path the generator reads `device.yml` from the current directory. The output location is always required.
 
@@ -145,11 +145,11 @@ The following options are available to configure the generated output.
 -ns, --namespace <ns>
 ```
 
-Specifies the namespace of the generated .NET interface that the pages describe. Page UIDs are derived from it, so it must match the namespace used to generate the interface. The default namespace is `Harp.DeviceName`, the same as for the .NET interface.
+Specifies the namespace of the page UIDs. It must match the namespace of the generated .NET interface. The default is `Harp.DeviceName`, the same as for the .NET interface.
 
 ## Generating device metadata
 
-The device metadata and IO pin configuration files can be generated from legacy XLS worksheet files describing the device. Both the `device.yml` and `ios.yml` will be generated from a single `registers.xls` file.
+The device metadata and IO pin configuration files can be generated from legacy XLS worksheet files that describe the device. Both the `device.yml` and `ios.yml` will be generated from a single `registers.xls` file.
 
 ```text
 dotnet harp.toolkit generate metadata <registers.xls>
@@ -166,4 +166,8 @@ Every generation command accepts an output location.
 -o, --output <o>
 ```
 
-Specifies the location where to place the generated output. The folder is created if it does not exist. The default is the current directory, except for documentation, where the output location is required. For an interface this usually points to the folder of your `.csproj` project, and for firmware to the folder of your `.cproj` project.
+Specifies the location where to place the generated output. The folder is created if it does not exist. The default is the current directory, except for documentation, where the output location is required. For an interface this is usually the folder of the `.csproj` project, and for firmware the folder of the `.cproj` project.
+
+## Exit code
+
+Every generation command exits 0 once the output is written, and 1 otherwise. A command exits 1 when the metadata file cannot be loaded or fails validation, or when code generation reports errors. The reason is reported as a message. Warnings alone do not affect the result, so a command that reports only warnings still writes its output and exits 0.

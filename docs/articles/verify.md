@@ -1,11 +1,11 @@
 # Device Verification
 
-`harp.toolkit` can check a device against the Harp specification and report where its behavior departs from what the standard requires. The checks span all three specification documents, covering the core register set and its access rules, the reply behavior required by the binary protocol, and alignment on the synchronization clock. Results print to the console as the run proceeds, and can be written to a shareable HTML report.
+`harp.toolkit` can check a device against the Harp specification and report where its behavior departs from what the standard requires. The tests span all three specification documents, covering the core register set and its access rules, the reply behavior required by the binary protocol, and alignment on the synchronization clock. Results print to the console as the run proceeds, and can be written to a shareable HTML report.
 
 A verification result records how a device behaved against a stated version of the specification, and it confers no compliance status.
 
 > [!Warning]
-> Verification writes to device registers. Conformance cannot be established without exercising writes, read-only enforcement and event streams, so there is no read-only mode. Some checks leave the device clock and the operation control register in a changed state, and the run assumes a freshly powered device. An interrupted run can also leave the timestamp register locked until the device is power cycled. Avoid verifying a device that is part of a running experiment.
+> Verification writes to device registers. Conformance cannot be established without exercising writes, read-only enforcement and event streams, so there is no read-only mode. Some tests leave the device clock and the operation control register in a changed state, and the run assumes a freshly powered device. An interrupted run can also leave the timestamp register locked until the device is power cycled. Avoid verifying a device that is part of a running experiment.
 
 ## Running a verification
 
@@ -15,9 +15,9 @@ A verification needs only the serial port of the device.
 dotnet harp.toolkit verify --port COM3
 ```
 
-Every check reports as passed, failed, skipped or error. A failed check ran to completion and the device did not behave as required by the specification. An error means the check could not be completed at all, which happens when the device replies with an error. A check is skipped when it needs an option that was not supplied, and the message names the option.
+Every test reports as passed, failed, skipped or error. A failed test ran to completion and the device did not behave as required by the specification. An error means the test could not be completed at all, which happens when the device replies with an error. A test is skipped when it needs an option that was not supplied, and the message identifies the option.
 
-Verification stops at the first request left unanswered for 2000 ms, since a late reply can be matched to a later check, and the console states where the run stopped. The HTML report is still written when `--report` is supplied, and states that the verification is incomplete.
+Verification stops at the first request left unanswered for 2000 ms, since a late reply can be matched to a later test, and the console states where the run stopped. The HTML report is still written when `--report` is supplied, and states that the verification is incomplete.
 
 #### Serial port
 ```text
@@ -31,24 +31,24 @@ Name of the serial port used to communicate with the device. This option is requ
 --verbose
 ```
 
-Prints a detailed result for every check once the run finishes, including the statistics gathered by the measurements. Per-check progress is printed either way.
+Prints a detailed result for every test once the run finishes, including the statistics gathered by the measurements. Per-test progress is printed either way.
 
 ### Exit code
 
-The command exits 1 if any check failed or ended in error, and 0 otherwise. Skipped checks do not affect the result, so a run that skips every optional check still exits 0. A run that cannot start or continue also exits 1, for example when the named serial port is not present or the device stops responding.
+The command exits 1 if any test failed or ended in error, and 0 otherwise. Skipped tests do not affect the result, so a run that skips every optional test still exits 0. A run that cannot start or continue also exits 1, for example when the specified serial port is not present or the device stops responding.
 
 ## Specification version
 
-Harp devices do not all implement the same version of the standard, so no single set of checks applies to every device.
+Harp devices do not all implement the same version of the standard, so no single set of tests applies to every device.
 
-A device declares the version it implements in `R_VERSION`. Where that register is absent, unreadable or reads all zeros, the device is held to v1, since a device that predates the register also predates the version field. By default, checks belonging to a version outside that scope are neither run nor listed. A skipped result means a check that was in scope and did not run. The console and the report state how many checks were excluded.
+A device declares the version it implements in `R_VERSION`. Where that register is absent, unreadable or reads all zeros, the device is held to v1, since a device that predates the register also predates the version field. By default, tests belonging to a version outside that scope are neither run nor listed. A skipped result means a test that was in scope and did not run. The console and the report state how many tests were excluded.
 
-#### Include prerelease checks
+#### Include prerelease tests
 ```text
 --prerelease
 ```
 
-Also runs the checks against the next specification revision, which is not yet ratified, regardless of the declared version. For a device that has not declared the next version, failures among them show what that version would require rather than defects against its own declared version. A failure here is worth checking carefully against the specification before it is treated as a device defect.
+Also runs the tests against the next specification revision, which is not yet ratified, regardless of the declared version. For a device that has not declared the next version, failures among them show what that version would require rather than defects against its own declared version. A failure here is worth checking carefully against the specification before it is treated as a device defect.
 
 ## Sharing a report
 
@@ -58,15 +58,15 @@ Console output is not an artifact. A report captures one run as a single HTML fi
 dotnet harp.toolkit verify --port COM3 --report report.html
 ```
 
-The report is titled with the device name and opens with a header describing the run.
+The report is titled with the device name and opens with a header that describes the run.
 
 - **WhoAmI** is the device identity class, read from `R_WHO_AM_I`.
 - **Serial port** is the port used to reach the device.
 - **Hardware version** and **Firmware version** are read from the device at startup, and read as not reported for a device that does not answer them.
 - **Protocol version declared** is what the device reports in `R_VERSION`, or that no version was declared.
 - **Checked against** is the version of the specification used to verify the device, together with the reason when that is narrower than the version declared by the device.
-- **Specification** links to the specification documents as they stood at the revision behind the checks.
-- **Register set** names the generator package supplying the core register metadata, which fully determines the register set expected by the run.
+- **Specification** links to the specification documents as they stood at the revision behind the tests.
+- **Register set** is the generator package that supplies the core register metadata, which fully determines the register set expected by the run.
 - **Toolkit version** identifies the build of `harp.toolkit` that produced the report, including its source commit.
 
 #### Report path
@@ -78,13 +78,13 @@ Path to the HTML report written after the run. Without it the results are printe
 
 ### Acting on a reported failure
 
-The **Specification** link is what makes a disagreement decidable, so it is worth checking carefully before filing anything. Specification text moves between releases, and a check is written against one state of it.
+The **Specification** link is what makes a disagreement decidable, so it is worth checking carefully before filing anything. Specification text moves between releases, and a test is written against one state of it.
 
-If the device matches the text at that commit and a check still fails, the check is wrong, and that belongs in the toolkit repository. If a check matches the text and the text itself is wrong, that belongs in the protocol repository.
+If the device matches the text at that commit and a test still fails, the test is wrong, and that belongs in the toolkit repository. If a test matches the text and the text itself is wrong, that belongs in the protocol repository.
 
 ## Verifying the synchronization clock
 
-Supplying a second device as a clock reference enables the alignment checks. Both devices must be connected to the same synchronization clock bus.
+A second device supplied as a clock reference enables the alignment tests. Both devices must be connected to the same synchronization clock bus.
 
 ```text
 dotnet harp.toolkit verify --port COM3 --clock-port COM4 --pps-event 32
@@ -95,14 +95,14 @@ dotnet harp.toolkit verify --port COM3 --clock-port COM4 --pps-event 32
 --clock-port <clock-port>
 ```
 
-Serial port of the reference clock device. Supplying it enables the clock alignment checks.
+Serial port of the reference clock device. This option enables the clock alignment tests.
 
 #### Tested device event register
 ```text
 --pps-event <pps-event>
 ```
 
-Address of the register on the tested device that reports the incoming pulse from the reference clock device. Supplying it enables the pulse alignment check, which also requires a clock reference port.
+Address of the register on the tested device that reports the incoming pulse from the reference clock device. This option enables the pulse alignment test, which also requires a clock reference port.
 
 Note that the pulse is a physical output that only some devices produce, and it is distinct both from the synchronization signal on the clock bus and from the software heartbeat. A device reports the pulse through an application register of its own, which is why the address has to be supplied explicitly.
 
@@ -111,11 +111,11 @@ Note that the pulse is a physical output that only some devices produce, and it 
 --clock-samples <clock-samples>
 ```
 
-Number of pulse event pairs to collect for the alignment check. The default is 5, and the value must be greater than zero.
+Number of pulse event pairs to collect for the alignment test. The default is 5, and the value must be greater than zero.
 
 ## Verifying the declared interface
 
-A device can also be checked against its own declared interface rather than only against the standard. Supplying the device metadata generates an interface from it, reads every declared register from the live device, and parses each reply with the generated parsers. The identity, firmware and hardware versions declared in the metadata are cross-checked against the values reported by the device.
+A device can also be checked against its own declared interface rather than only against the standard. The device metadata is used to generate an interface, to read every declared register from the live device, and to parse each reply with the generated parsers. The identity, firmware and hardware versions declared in the metadata are cross-checked against the values reported by the device.
 
 ```text
 dotnet harp.toolkit verify --port COM3 --metadata device.yml
@@ -126,6 +126,6 @@ dotnet harp.toolkit verify --port COM3 --metadata device.yml
 --metadata <metadata>
 ```
 
-Path to the file describing the device registers. The file must exist.
+Path to the file that describes the device registers. The file must exist.
 
-Unlike code generation, this option has no default, so a `device.yml` located in the current directory does not automatically enable these checks.
+Unlike code generation, this option has no default, so a `device.yml` located in the current directory does not automatically enable these tests.

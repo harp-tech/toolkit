@@ -1,6 +1,6 @@
 # Harp Toolkit
 
-Tool for inspecting, updating and interfacing with Harp devices, with automatic firmware and interface [code generation](https://harp-tech.org/toolkit/articles/generate.html).
+Tool for inspecting, updating and interfacing with Harp devices, with automatic [code generation](https://harp-tech.org/toolkit/articles/generate.html) for firmware, interfaces and reference documentation.
 
 ## Getting Started
 
@@ -54,7 +54,7 @@ See [Firmware Update](https://harp-tech.org/toolkit/articles/update.html) for th
 
 ## Code Generation
 
-`harp.toolkit` can also generate device interface and firmware code from a `device.yml` metadata file. With a `device.yml` in the current directory, the following generates the .NET device interface, targeting [Bonsai.Harp](https://harp-tech.org/api/Bonsai.Harp.html):
+`harp.toolkit` can also generate device interface and firmware code from a `device.yml` metadata file. With a `device.yml` in the current directory, the following generates the .NET device interface for [Bonsai.Harp](https://harp-tech.org/api/Bonsai.Harp.html):
 
 ```text
 dotnet harp.toolkit generate interface csharp

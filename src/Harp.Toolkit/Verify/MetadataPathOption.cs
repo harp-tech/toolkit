@@ -10,7 +10,7 @@ public class MetadataPathOption : Option<FileInfo>
         : base("--metadata")
     {
         OptionValidation.AcceptExistingOnly(this);
-        Description = "The path to the file that describes the device registers. Enables device interface tests.";
+        Description = "Path to the file that describes the device registers. Enables device interface tests.";
     }
 
     public static DeviceMetadata Parse(FileInfo metadataPath, string text)

@@ -6,7 +6,7 @@ namespace Harp.Toolkit.Generate;
 class GenerateCSharpInterfaceCommand : Command
 {
     public GenerateCSharpInterfaceCommand()
-        : base("csharp", "Generate reactive programming API and async API.")
+        : base("csharp", "Generate the .NET device interface.")
     {
         MetadataPathArgument metadataPathArgument = new();
         NamespaceOption namespaceOption = new();

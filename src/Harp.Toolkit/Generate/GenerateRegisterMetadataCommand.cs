@@ -9,13 +9,13 @@ namespace Harp.Toolkit.Generate;
 class GenerateRegisterMetadataCommand : Command
 {
     public GenerateRegisterMetadataCommand()
-        : base("metadata", "Generate device register metadata file from legacy XLS files.")
+        : base("metadata", "Generate device metadata from a legacy XLS file.")
     {
         OutputPathOption outputPathOption = new();
         Argument<FileInfo> registerWorksheetPathArgument = ArgumentValidation.AcceptExistingOnly(
             new Argument<FileInfo>("registers.xls")
             {
-                Description = "The path to the file that describes the device registers.",
+                Description = "Path to the file that describes the device registers.",
                 Arity = ArgumentArity.ExactlyOne
             });
 
