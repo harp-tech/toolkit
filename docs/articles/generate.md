@@ -1,6 +1,6 @@
 # Code Generation
 
-`harp.toolkit` can be used to automatically generate firmware and interface code from device metadata.
+`harp.toolkit` can be used to automatically generate firmware code, interface code and reference documentation from device metadata.
 
 ## Editing device metadata
 
@@ -109,6 +109,44 @@ Specifies whether to generate implementation stubs. In general this should be ru
 > [!Warning]
 > This replaces the implementation files, including any code already written into them. Generate into an empty directory to compare against an existing implementation.
 
+## Generating device documentation
+
+Device reference documentation is generated from the same `device.yml` file as the device interface, with one page for each public register. Each page shows the details of the register, such as address, payload type, access, default value and range, followed by the members of its payload and the values of every mask that it uses. All content is generated for a specific site generator. Currently, [docfx](https://dotnet.github.io/docfx/) is the only supported site generator.
+
+The target site generator must be specified, followed by an optional metadata path. Without a path the generator reads `device.yml` from the current directory. The output location is always required.
+
+```text
+dotnet harp.toolkit generate documentation docfx path/to/device.yml -o artifacts/docs/registers
+```
+
+### Docfx reference pages
+
+The generator writes the following files:
+
+- A docfx UniversalReference page for each public register.
+- A page for each payload type and mask, kept as a cross-reference target and not listed in the table of contents.
+- A `toc.yml` file that lists the register pages.
+- A `registers.md` file with a table of all registers, written as a fragment to include in another page.
+
+Each register page has the UID of the corresponding register type declared by the .NET interface, together with the UIDs of its timestamped type and of the types that create its payloads. Cross-references to any of these types therefore lead to the register page, and the Bonsai editor opens the register page as the help for any of these operators.
+
+The pages render with the template in [harp-tech/docfx-tools](https://github.com/harp-tech/docfx-tools), which the site must include.
+
+> [!Note]
+> A site that also builds the .NET API reference must exclude from it every .NET type documented by a generated page, so that each UID is declared once.
+
+> [!Tip]
+> A hand-written overwrite page in `apidoc/` for the register UID still applies, so usage notes and workflow examples can be added to the generated page.
+
+The following options are available to configure the generated output.
+
+#### Namespace
+```text
+-ns, --namespace <ns>
+```
+
+Specifies the namespace of the generated .NET interface that the pages describe. Page UIDs are derived from it, so it must match the namespace used to generate the interface. The default namespace is `Harp.DeviceName`, the same as for the .NET interface.
+
 ## Generating device metadata
 
 The device metadata and IO pin configuration files can be generated from legacy XLS worksheet files describing the device. Both the `device.yml` and `ios.yml` will be generated from a single `registers.xls` file.
@@ -128,4 +166,4 @@ Every generation command accepts an output location.
 -o, --output <o>
 ```
 
-Specifies the location where to place the generated output. The default is the current directory. For an interface this usually points to the folder of your `.csproj` project, and for firmware to the folder of your `.cproj` project.
+Specifies the location where to place the generated output. The folder is created if it does not exist. The default is the current directory, except for documentation, where the output location is required. For an interface this usually points to the folder of your `.csproj` project, and for firmware to the folder of your `.cproj` project.

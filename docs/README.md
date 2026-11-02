@@ -66,7 +66,7 @@ To generate the [Harp Python](https://harp-tech.org/python) interface instead:
 dotnet harp.toolkit generate interface python
 ```
 
-See [Code Generation](https://harp-tech.org/toolkit/articles/generate.html) for authoring device metadata, generating firmware, and the available options.
+See [Code Generation](https://harp-tech.org/toolkit/articles/generate.html) for authoring device metadata, generating firmware and reference documentation, and the available options.
 
 ## Device Verification
 
