@@ -8,7 +8,7 @@ public class NamespaceOption : Option<string>
     public NamespaceOption()
         : base("-ns", "--namespace")
     {
-        Description = "The namespace for the generated code. The default is `Harp.DeviceName`.";
+        Description = "Namespace for the generated code. The default is Harp.DeviceName.";
     }
 
     public string GetValue(ParseResult parseResult, DeviceMetadata deviceMetadata)

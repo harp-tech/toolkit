@@ -10,7 +10,7 @@ public class MetadataPathArgument : Argument<FileInfo>
         : base("metadata")
     {
         ArgumentValidation.AcceptExistingOnly(this);
-        Description = "The path to the file that describes the device registers.";
+        Description = "Path to the file that describes the device registers.";
         DefaultValueFactory = result => result.AcceptExistingOnly(new FileInfo("device.yml"));
         Arity = ArgumentArity.ZeroOrOne;
     }

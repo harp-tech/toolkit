@@ -6,12 +6,12 @@ namespace Harp.Toolkit.Generate;
 class GenerateDocfxDocumentationCommand : Command
 {
     public GenerateDocfxDocumentationCommand()
-        : base("docfx", "Generate docfx reference pages and a register index for device registers.")
+        : base("docfx", "Generate docfx reference pages and an index for the device registers.")
     {
         MetadataPathArgument metadataPathArgument = new();
         NamespaceOption namespaceOption = new()
         {
-            Description = "The namespace of the generated interface that the pages describe. The default is `Harp.DeviceName`."
+            Description = "Namespace used to link the pages to the .NET interface. The default is Harp.DeviceName."
         };
         OutputPathOption outputPathOption = new()
         {

@@ -98,4 +98,4 @@ Writes the image without the compatibility check.
 
 The flag covers two situations that cannot be separated. A device in bootloader mode reports no identity, so there is nothing to check the image against. Recovering a device in that state therefore requires this flag.
 
-The other use is firmware development. Do not use the flag only because an update was refused. The flag removes the only check that prevents an update with an image targeting a different device. If an image names a different device, it is usually the wrong image.
+The other use is firmware development. Do not use the flag only because an update was refused. The flag removes the only check that prevents an update with an image that targets a different device. If the name of an image refers to a different device, it is usually the wrong image.
