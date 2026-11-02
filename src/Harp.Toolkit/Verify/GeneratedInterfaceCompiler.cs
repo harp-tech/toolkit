@@ -19,8 +19,7 @@ internal static class GeneratedInterfaceCompiler
     {
         var generator = new InterfaceGenerator(deviceOnlyMetadata, @namespace);
         var implementation = generator.GenerateImplementation();
-        if (!GeneratorHelper.AssertNoGeneratorErrors(generator.Errors))
-            throw new InvalidOperationException("Interface generation from device.yml completed with errors.");
+        GeneratorHelper.AssertNoGeneratorErrors(generator.Errors);
 
         var syntaxTree = CSharpSyntaxTree.ParseText(implementation.Device);
         var compilation = CSharpCompilation.Create(

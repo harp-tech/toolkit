@@ -23,8 +23,8 @@ class GenerateCSharpInterfaceCommand : Command
             var deviceMetadata = metadataPathArgument.Load(parseResult);
             var generator = new InterfaceGenerator(deviceMetadata, namespaceOption.GetValue(parseResult, deviceMetadata));
             var implementation = generator.GenerateImplementation();
-            if (GeneratorHelper.AssertNoGeneratorErrors(generator.Errors))
-                GenerateCommand.WriteFileContents(outputPath.FullName, implementation);
+            GeneratorHelper.AssertNoGeneratorErrors(generator.Errors);
+            GenerateCommand.WriteFileContents(outputPath.FullName, implementation);
         });
     }
 }

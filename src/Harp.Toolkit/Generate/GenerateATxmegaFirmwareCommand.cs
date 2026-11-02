@@ -32,12 +32,10 @@ class GenerateATxmegaFirmwareCommand : Command
             var generator = new FirmwareGenerator(deviceMetadata, portPinMetadata);
             var headers = generator.GenerateHeaders();
             var implementation = generateImplementation ? generator.GenerateImplementation() : default;
-            if (GeneratorHelper.AssertNoGeneratorErrors(generator.Errors))
-            {
-                GenerateCommand.WriteFileContents(outputPath.FullName, headers);
-                if (generateImplementation)
-                    GenerateCommand.WriteFileContents(outputPath.FullName, implementation);
-            }
+            GeneratorHelper.AssertNoGeneratorErrors(generator.Errors);
+            GenerateCommand.WriteFileContents(outputPath.FullName, headers);
+            if (generateImplementation)
+                GenerateCommand.WriteFileContents(outputPath.FullName, implementation);
         });
     }
 }
