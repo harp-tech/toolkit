@@ -9,10 +9,7 @@ class GenerateCSharpInterfaceCommand : Command
         : base("csharp", "Generate reactive programming API and async API.")
     {
         MetadataPathArgument metadataPathArgument = new();
-        Option<string> namespaceOption = new("-ns", "--namespace")
-        {
-            Description = "The namespace for the generated code. The default is `Harp.DeviceName`."
-        };
+        NamespaceOption namespaceOption = new();
         OutputPathOption outputPathOption = new();
 
         Arguments.Add(metadataPathArgument);
@@ -22,10 +19,9 @@ class GenerateCSharpInterfaceCommand : Command
         SetAction(parseResult =>
         {
             var outputPath = parseResult.GetRequiredValue(outputPathOption);
-            var ns = parseResult.GetValue(namespaceOption);
 
             var deviceMetadata = metadataPathArgument.Load(parseResult);
-            var generator = new InterfaceGenerator(deviceMetadata, ns ?? $"Harp.{deviceMetadata.Device}");
+            var generator = new InterfaceGenerator(deviceMetadata, namespaceOption.GetValue(parseResult, deviceMetadata));
             var implementation = generator.GenerateImplementation();
             if (GeneratorHelper.AssertNoGeneratorErrors(generator.Errors))
                 GenerateCommand.WriteFileContents(outputPath.FullName, implementation);
