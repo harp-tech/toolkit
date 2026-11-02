@@ -86,10 +86,9 @@ public class VerifyCommand : Command
         string? deviceRawYaml = null;
         if (metadataPath is not null)
         {
-            AnsiConsole.Markup($"Loading device metadata from [bold]{metadataPath.FullName}[/]...");
             deviceRawYaml = await File.ReadAllTextAsync(metadataPath.FullName, cancellationToken);
             deviceMetadata = MetadataPathOption.Parse(metadataPath, deviceRawYaml);
-            AnsiConsole.MarkupLine($" [green]Done![/] ({deviceMetadata.Registers.Count} registers)");
+            AnsiConsole.MarkupLine($"Loaded device metadata from [bold]{metadataPath.FullName}[/] ({deviceMetadata.Registers.Count} registers).");
         }
 
         using var connection = await VerifyConnection.OpenAsync(portName, cancellationToken);

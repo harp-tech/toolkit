@@ -28,8 +28,8 @@ class GeneratePythonInterfaceCommand : Command
             var deviceMetadata = metadataPathArgument.Load(parseResult);
             var generator = new PythonGenerator(deviceMetadata, package);
             var implementation = generator.GenerateImplementation();
-            if (GeneratorHelper.AssertNoGeneratorErrors(generator.Errors))
-                GenerateCommand.WriteFileContents(outputPath.FullName, implementation);
+            GeneratorHelper.AssertNoGeneratorErrors(generator.Errors);
+            GenerateCommand.WriteFileContents(outputPath.FullName, implementation);
         });
     }
 }

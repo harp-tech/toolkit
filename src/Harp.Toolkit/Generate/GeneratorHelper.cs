@@ -5,7 +5,7 @@ namespace Harp.Toolkit.Generate;
 
 public static class GeneratorHelper
 {
-    public static bool AssertNoGeneratorErrors(CompilerErrorCollection errors)
+    public static void AssertNoGeneratorErrors(CompilerErrorCollection errors)
     {
         if (errors.Count > 0)
         {
@@ -16,10 +16,16 @@ public static class GeneratorHelper
                 var warningString = error.IsWarning ? "warning" : "error";
                 errorLog.AppendLine($"{error.FileName}: {warningString}: {error.ErrorText}");
             }
-            Console.Error.WriteLine(errorLog.ToString());
-            return !errors.HasErrors;
-        }
 
-        return true;
+            var message = errorLog.ToString();
+            if (errors.HasErrors)
+            {
+                var exception = new InvalidOperationException(message);
+                exception.SetDescription(message);
+                throw exception;
+            }
+
+            Console.Error.WriteLine(message);
+        }
     }
 }
