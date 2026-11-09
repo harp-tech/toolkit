@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using Bonsai.Harp;
 
 namespace Harp.Toolkit.Firmware;
 
@@ -19,10 +18,13 @@ public static class FirmwareUpdate
     /// The time to wait, in milliseconds, for the device to become ready. A negative timeout
     /// waits indefinitely.
     /// </param>
-    /// <param name="cancellationToken">The token that cancels the wait.</param>
+    /// <param name="cancellationToken">
+    /// The token to monitor for cancellation requests. The default value is
+    /// <see cref="CancellationToken.None"/>.
+    /// </param>
     /// <returns>
     /// The task object representing the asynchronous operation. The <see cref="Task{TResult}.Result"/>
-    /// property is <b>true</b> if the device is ready; otherwise, <b>false</b>.
+    /// property is <see langword="true"/> if the device is ready; otherwise, <see langword="false"/>.
     /// </returns>
     /// <remarks>
     /// Wait only for a device that runs its application. A bootloader clears its fall-through
@@ -37,7 +39,8 @@ public static class FirmwareUpdate
         var stopwatch = Stopwatch.StartNew();
         do
         {
-            if (await TryReadWhoAmIAsync(portName, cancellationToken))
+            var probe = await DeviceProbe.ProbeAsync(portName, ProbeTimeoutMilliseconds, cancellationToken);
+            if (probe.Status == DeviceProbeStatus.Responding)
             {
                 return true;
             }
@@ -47,21 +50,5 @@ public static class FirmwareUpdate
         while (timeout < 0 || stopwatch.ElapsedMilliseconds < timeout);
 
         return false;
-    }
-
-    static async Task<bool> TryReadWhoAmIAsync(string portName, CancellationToken cancellationToken)
-    {
-        try
-        {
-            using var device = new AsyncDevice(portName);
-            await device.ReadWhoAmIAsync(cancellationToken).WithTimeout(ProbeTimeoutMilliseconds);
-            return true;
-        }
-        catch (Exception ex) when (ex is HarpException or TimeoutException or IOException or
-                                         UnauthorizedAccessException or InvalidOperationException or
-                                         ArgumentException)
-        {
-            return false;
-        }
     }
 }

@@ -59,7 +59,10 @@ public sealed class Bootloader
     /// <summary>
     /// Asynchronously reads the version of the bootloader.
     /// </summary>
-    /// <param name="cancellationToken">The token that cancels the operation.</param>
+    /// <param name="cancellationToken">
+    /// The token to monitor for cancellation requests. The default value is
+    /// <see cref="CancellationToken.None"/>.
+    /// </param>
     /// <returns>
     /// The task object representing the asynchronous operation. The <see cref="Task{TResult}.Result"/>
     /// property contains the major and minor version of the bootloader.
@@ -83,7 +86,10 @@ public sealed class Bootloader
     /// <summary>
     /// Asynchronously erases the whole application flash.
     /// </summary>
-    /// <param name="cancellationToken">The token that cancels the operation.</param>
+    /// <param name="cancellationToken">
+    /// The token to monitor for cancellation requests. The default value is
+    /// <see cref="CancellationToken.None"/>.
+    /// </param>
     /// <returns>The task object representing the asynchronous operation.</returns>
     /// <remarks>
     /// The bootloader answers once the erase completes. A device whose application flash is
@@ -107,12 +113,15 @@ public sealed class Bootloader
     /// <param name="progress">
     /// The optional object that receives the percentage of image records programmed, from 0 to 100.
     /// </param>
-    /// <param name="cancellationToken">The token that cancels the operation between frames.</param>
+    /// <param name="cancellationToken">
+    /// The token to monitor for cancellation requests. The default value is
+    /// <see cref="CancellationToken.None"/>.
+    /// </param>
     /// <returns>The task object representing the asynchronous operation.</returns>
     /// <remarks>
     /// A frame is never resent. The bootloader stops at a record it cannot accept and does not
     /// answer, after writing the records before it, and flash that is already programmed cannot
-    /// be programmed again without an erase. After a failure, start again from
+    /// be programmed again without an erase. After a failure or a cancellation, start again from
     /// <see cref="EraseFlashAsync"/>.
     /// </remarks>
     public async Task ProgramFlashAsync(
@@ -144,7 +153,10 @@ public sealed class Bootloader
     /// </summary>
     /// <param name="address">The address of the first byte in the range.</param>
     /// <param name="length">The number of bytes in the range.</param>
-    /// <param name="cancellationToken">The token that cancels the operation.</param>
+    /// <param name="cancellationToken">
+    /// The token to monitor for cancellation requests. The default value is
+    /// <see cref="CancellationToken.None"/>.
+    /// </param>
     /// <returns>
     /// The task object representing the asynchronous operation. The <see cref="Task{TResult}.Result"/>
     /// property contains the checksum computed by the bootloader.
@@ -168,11 +180,14 @@ public sealed class Bootloader
     /// Asynchronously determines whether application flash holds the specified image.
     /// </summary>
     /// <param name="image">The firmware image to compare with application flash.</param>
-    /// <param name="cancellationToken">The token that cancels the operation.</param>
+    /// <param name="cancellationToken">
+    /// The token to monitor for cancellation requests. The default value is
+    /// <see cref="CancellationToken.None"/>.
+    /// </param>
     /// <returns>
     /// The task object representing the asynchronous operation. The <see cref="Task{TResult}.Result"/>
-    /// property is <b>true</b> if the checksum of application flash matches the image;
-    /// otherwise, <b>false</b>.
+    /// property is <see langword="true"/> if the checksum of application flash matches the image;
+    /// otherwise, <see langword="false"/>.
     /// </returns>
     public async Task<bool> VerifyAsync(FirmwareImage image, CancellationToken cancellationToken = default)
     {
@@ -184,7 +199,10 @@ public sealed class Bootloader
     /// <summary>
     /// Asynchronously requests the bootloader to start the application.
     /// </summary>
-    /// <param name="cancellationToken">The token that cancels the operation.</param>
+    /// <param name="cancellationToken">
+    /// The token to monitor for cancellation requests. The default value is
+    /// <see cref="CancellationToken.None"/>.
+    /// </param>
     /// <returns>The task object representing the asynchronous operation.</returns>
     /// <remarks>
     /// The bootloader does not answer this request. It resets the microcontroller, and the

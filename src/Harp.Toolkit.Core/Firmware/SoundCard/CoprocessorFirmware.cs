@@ -39,11 +39,11 @@ public sealed class CoprocessorFirmware
     /// <param name="input">The file name of the coprocessor image, without its extension.</param>
     /// <param name="metadata">
     /// When this method returns, contains the metadata carried by the name if the conversion
-    /// was successful; otherwise, contains <b>null</b>.
+    /// was successful; otherwise, contains <see langword="null"/>.
     /// </param>
     /// <returns>
-    /// <b>true</b> if the name carries a processor suffix and otherwise follows the Harp firmware
-    /// naming convention; otherwise, <b>false</b>.
+    /// <see langword="true"/> if the name carries a processor suffix and otherwise follows the
+    /// Harp firmware naming convention; otherwise, <see langword="false"/>.
     /// </returns>
     public static bool TryParseMetadata(string input, [NotNullWhen(true)] out FirmwareMetadata? metadata)
     {
