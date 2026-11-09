@@ -149,14 +149,14 @@ Specifies the namespace of the page UIDs. It must match the namespace of the gen
 
 ## Generating device metadata
 
-The device metadata and IO pin configuration files can be generated from legacy XLS worksheet files that describe the device. Both the `device.yml` and `ios.yml` will be generated from a single `registers.xls` file.
+The device metadata and IO pin configuration files can be generated from legacy XLS worksheet files that describe the device. Both the `device.yml` and `ios.yml` are generated from a single `registers.xls` file.
 
 ```text
 dotnet harp.toolkit generate metadata <registers.xls>
 ```
 
 > [!Warning]
-> The `registers.xls` file format is deprecated and is no longer recommended for editing device metadata as it lacks important features of the new YAML format, including complex payload spec formats and mixed access registers.
+> The `registers.xls` file format is deprecated and is no longer recommended for editing device metadata as it lacks important features of the new YAML format, including complex `payloadSpec` formats and mixed access registers.
 
 ## Output location
 

@@ -5,7 +5,7 @@ Tool for inspecting, updating and interfacing with Harp devices, with automatic 
 ## Getting started
 
 1. Navigate to the [Harp.Toolkit NuGet tool package](https://www.nuget.org/packages/Harp.Toolkit/)
-2. Click `.NET CLI (Local)` and copy the two suggested commands. E.g.:
+2. Select `.NET CLI (Local)` and copy the two suggested commands, for example:
 
     ```text
     dotnet new tool-manifest
