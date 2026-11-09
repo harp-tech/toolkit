@@ -7,9 +7,8 @@ namespace Harp.Toolkit.Tests;
 
 /// <summary>
 /// Repeatedly updates the firmware of a physical device and classifies any failures by the stage
-/// they occurred at, so that a change to
-/// <see cref="Bootloader.UpdateFirmwareAsync(string, DeviceFirmware, bool, int, IProgress{UpdateProgress})"/>
-/// can be judged against a measured failure rate.
+/// they occurred at, so that a change to <see cref="Bootloader.UpdateFirmwareAsync"/> can be judged
+/// against a measured failure rate.
 /// </summary>
 /// <remarks>
 /// This exercises the real call, which matters because the failures are timing dependent and
@@ -33,7 +32,7 @@ public class TestATxmegaFirmwareUpdate
 
     public TestContext TestContext { get; set; } = null!;
 
-    static async Task<Exception?> TryForceUpdateAsync(string portName, DeviceFirmware firmware)
+    static async Task<Exception?> TryForceUpdateAsync(string portName, ATxmegaFirmware firmware)
     {
         try
         {
@@ -60,7 +59,7 @@ public class TestATxmegaFirmwareUpdate
         var iterations = HardwareTestHelper.GetTestIterations(5);
         HardwareTestHelper.RequireResetConsent();
 
-        var firmware = DeviceFirmware.FromFile(firmwarePath);
+        var firmware = ATxmegaFirmware.FromFile(firmwarePath);
         TestContext.WriteLine("firmware image: {0}", firmwarePath);
 
         // Wait until the device responds, to avoid starting with a device still restarting

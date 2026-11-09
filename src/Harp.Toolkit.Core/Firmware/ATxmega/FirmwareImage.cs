@@ -1,27 +1,21 @@
 ﻿namespace Harp.Toolkit.Firmware.ATxmega;
 
 /// <summary>
-/// Represents a hardware control firmware image which can be uploaded into a Harp device.
+/// Represents a firmware image in the Intel HEX format used by the ATxmega bootloader.
 /// </summary>
-public sealed class DeviceFirmware
+public sealed class FirmwareImage
 {
     const int DefaultPageSize = 512;
 
-    private DeviceFirmware(FirmwareMetadata metadata, byte[] data)
+    private FirmwareImage(byte[] data)
     {
-        Metadata = metadata;
         Data = data;
     }
 
     /// <summary>
-    /// Gets information about the firmware version and supported devices on which it can be installed.
+    /// Gets the bytes of the image, padded with the erased value to a whole number of pages.
     /// </summary>
-    public FirmwareMetadata Metadata { get; private set; }
-
-    /// <summary>
-    /// Gets the binary representation of the firmware to be installed on the device.
-    /// </summary>
-    public byte[] Data { get; private set; }
+    public byte[] Data { get; }
 
     static char ReadChar(StreamReader stream, char[] hexDigit)
     {
@@ -78,50 +72,27 @@ public sealed class DeviceFirmware
     }
 
     /// <summary>
-    /// Creates a <see cref="DeviceFirmware"/> object from the specified file in Intel HEX format
+    /// Creates a <see cref="FirmwareImage"/> object from the specified file in Intel HEX format,
     /// using the default page size.
     /// </summary>
-    /// <param name="path">The name of the file from which to create the <see cref="DeviceFirmware"/>.</param>
-    /// <returns>
-    /// A new <see cref="DeviceFirmware"/> object representing the extracted binary firware blob,
-    /// together with the metadata extracted from the firmware file name.
-    /// </returns>
-    public static DeviceFirmware FromFile(string path)
-    {
-        var metadata = FirmwareMetadata.Parse(Path.GetFileNameWithoutExtension(path));
-        return FromFile(metadata, path);
-    }
-
-    /// <summary>
-    /// Creates a <see cref="DeviceFirmware"/> object from the specified metadata and file
-    /// in Intel HEX format.
-    /// </summary>
-    /// <param name="metadata">The metadata describing the firmware version and supported devices.</param>
-    /// <param name="path">The name of the file from which to create the <see cref="DeviceFirmware"/>.</param>
-    /// <returns>
-    /// A new <see cref="DeviceFirmware"/> object representing the extracted binary firware blob,
-    /// together with the specified metadata.
-    /// </returns>
-    public static DeviceFirmware FromFile(FirmwareMetadata metadata, string path)
+    /// <param name="path">The name of the file in Intel HEX format.</param>
+    /// <returns>A new <see cref="FirmwareImage"/> object holding the bytes of the file.</returns>
+    public static FirmwareImage FromFile(string path)
     {
         using (var stream = File.OpenRead(path))
         {
-            return FromStream(metadata, stream, DefaultPageSize);
+            return FromStream(stream, DefaultPageSize);
         }
     }
 
     /// <summary>
-    /// Creates a <see cref="DeviceFirmware"/> object extracted from the specified ASCII
-    /// stream in Intel HEX format, the specified metadata and page size.
+    /// Creates a <see cref="FirmwareImage"/> object from the specified ASCII stream in Intel HEX
+    /// format and page size.
     /// </summary>
-    /// <param name="metadata">The metadata describing the firmware version and supported devices.</param>
-    /// <param name="stream">The ASCII stream in Intel HEX format from which to extract the device firmware.</param>
-    /// <param name="pageSize">The size of the memory blocks used to upload the device firmware.</param>
-    /// <returns>
-    /// A new <see cref="DeviceFirmware"/> object representing the extracted binary firware blob,
-    /// together with the specified metadata.
-    /// </returns>
-    public static DeviceFirmware FromStream(FirmwareMetadata metadata, Stream stream, int pageSize)
+    /// <param name="stream">The ASCII stream in Intel HEX format from which to read the image.</param>
+    /// <param name="pageSize">The size of the memory blocks used to write the image to the device.</param>
+    /// <returns>A new <see cref="FirmwareImage"/> object holding the bytes of the stream.</returns>
+    public static FirmwareImage FromStream(Stream stream, int pageSize)
     {
         const char StartCode = ':';
         using (var reader = new StreamReader(stream))
@@ -177,7 +148,7 @@ public sealed class DeviceFirmware
             }
 
             var byteCode = Array.ConvertAll(data, value => (byte)value);
-            return new DeviceFirmware(metadata, byteCode);
+            return new FirmwareImage(byteCode);
         }
     }
 

@@ -1,13 +1,11 @@
-﻿using Harp.Toolkit.Firmware.ATxmega;
-
-namespace Harp.Toolkit.Firmware.Pico;
+﻿namespace Harp.Toolkit.Firmware.Pico;
 
 /// <summary>
 /// Represents a firmware image for a device built on the Pico core.
 /// </summary>
 /// <remarks>
-/// The metadata comes from the file name, which follows the same convention as an ATxmega image
-/// apart from the <c>.uf2</c> extension.
+/// The metadata comes from the file name, which follows the Harp firmware naming convention with
+/// the <c>.uf2</c> extension.
 /// </remarks>
 public sealed class PicoFirmware
 {

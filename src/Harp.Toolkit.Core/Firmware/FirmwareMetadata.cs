@@ -3,11 +3,11 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using Bonsai.Harp;
 
-namespace Harp.Toolkit.Firmware.ATxmega;
+namespace Harp.Toolkit.Firmware;
 
 /// <summary>
 /// Represents information about the device, firmware version and hardware version numbers
-/// contained in a particular device or hex file.
+/// contained in a particular device or firmware file.
 /// </summary>
 public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
 {
@@ -20,7 +20,7 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     /// specified device name, the firmware version and compatible hardware versions.
     /// </summary>
     /// <param name="deviceName">The unique identifier of the device type on which the firmware should be installed.</param>
-    /// <param name="firmwareVersion">The version of the firmware contained in the device or hex file.</param>
+    /// <param name="firmwareVersion">The version of the firmware contained in the device or firmware file.</param>
     /// <param name="coreVersion">The version of the Harp core implemented by the firmware.</param>
     /// <param name="hardwareVersion">The hardware version of the device, or range of hardware versions supported by the firmware.</param>
     /// <param name="assemblyVersion">The board assembly version of the device, or range of assembly versions supported by the firmware.</param>
@@ -47,7 +47,7 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     public string DeviceName { get; }
 
     /// <summary>
-    /// Gets the version of the firmware contained in the device or hex file.
+    /// Gets the version of the firmware contained in the device or firmware file.
     /// </summary>
     public HarpVersion FirmwareVersion { get; }
 
