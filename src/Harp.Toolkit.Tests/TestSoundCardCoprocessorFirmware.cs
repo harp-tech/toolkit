@@ -1,5 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Harp.Toolkit.Firmware.ATxmega;
+using Harp.Toolkit.Firmware;
 using Harp.Toolkit.Firmware.SoundCard;
 
 namespace Harp.Toolkit.Tests;

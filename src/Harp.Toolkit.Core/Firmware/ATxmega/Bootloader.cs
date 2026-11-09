@@ -30,7 +30,7 @@ public static class Bootloader
     /// Asynchronously updates the firmware of the Harp device on the specified port.
     /// </summary>
     /// <param name="portName">The name of the serial port used to communicate with the Harp device.</param>
-    /// <param name="firmware">The binary firmware image to upload to the device.</param>
+    /// <param name="firmware">The firmware image to write to the device.</param>
     /// <param name="forceUpdate">
     /// <see langword="true"/> to indicate that the firmware should be uploaded even if the device
     /// reports unsupported hardware, or is in bootloader mode; <see langword="false"/> to throw an
@@ -52,7 +52,7 @@ public static class Bootloader
     /// </remarks>
     public static async Task UpdateFirmwareAsync(
         string portName,
-        DeviceFirmware firmware,
+        ATxmegaFirmware firmware,
         bool forceUpdate,
         int timeout,
         IProgress<UpdateProgress>? progress = default,
@@ -118,20 +118,20 @@ public static class Bootloader
                     var bytesWritten = 0;
                     var reportSize = pageSize * 8;
                     var dataMessage = new byte[pageSize + HeaderSize];
-                    while (bytesWritten < firmware.Data.Length)
+                    while (bytesWritten < firmware.Image.Data.Length)
                     {
-                        CreateBootloaderMessage(dataMessage, WritePage, bytesWritten, firmware.Data, bytesWritten, pageSize);
+                        CreateBootloaderMessage(dataMessage, WritePage, bytesWritten, firmware.Image.Data, bytesWritten, pageSize);
                         await BootloaderCommandAsync(bootloader.BaseStream, dataMessage);
                         bytesWritten += pageSize;
                         if (bytesWritten % reportSize == 0)
                         {
-                            var percent = 40 + bytesWritten * 50 / firmware.Data.Length;
+                            var percent = 40 + bytesWritten * 50 / firmware.Image.Data.Length;
                             progress?.Report(new(UpdateStage.Write, percent));
                         }
                     }
 
                     progress?.Report(new(UpdateStage.Restart, 90));
-                    CreateBootloaderMessage(dataMessage, ExitBootloader, 0, firmware.Data, 0, pageSize);
+                    CreateBootloaderMessage(dataMessage, ExitBootloader, 0, firmware.Image.Data, 0, pageSize);
                     await BootloaderCommandAsync(bootloader.BaseStream, dataMessage);
                     progress?.Report(new(UpdateStage.Restart, 100));
                     break;

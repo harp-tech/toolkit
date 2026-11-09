@@ -246,12 +246,12 @@ public class UpdateFirmwareCommand : Command
             }
         }
 
-        DeviceFirmware firmware;
+        ATxmegaFirmware firmware;
         CoprocessorFirmware? coprocessorFirmware = null;
         var imagePath = firmwarePath.FullName;
         try
         {
-            firmware = DeviceFirmware.FromFile(metadata, imagePath);
+            firmware = ATxmegaFirmware.FromFile(metadata, imagePath);
             if (coprocessorPath is not null)
             {
                 imagePath = coprocessorPath;

@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Harp.Toolkit.Firmware.ATxmega;
 using Harp.Toolkit.Firmware.PIC32;
 
 namespace Harp.Toolkit.Firmware.SoundCard;
