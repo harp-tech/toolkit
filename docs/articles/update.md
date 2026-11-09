@@ -75,7 +75,7 @@ An image for a device built on the Pico core follows the same convention with th
 
 An image built for a range of hardware revisions states `x` in place of a hardware version component. For example, `hw1.x` marks an image that is valid for every revision of hardware 1.
 
-The update refuses an image when the device name does not match the connected device, or when the device does not satisfy the hardware version. The message names both sides, so the mismatch is visible without opening the file.
+The update refuses an image when the device name does not match the connected device, or when the device does not satisfy the hardware version.
 
 > [!Note]
 > A device with a coprocessor, such as the SoundCard, publishes a second image in each release, with a `.PIC32` suffix after the device name, or `.X` in older releases. The update writes both images, and requires the coprocessor image to sit next to the firmware image under the same name with the suffix.

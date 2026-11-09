@@ -48,7 +48,7 @@ A device declares the version it implements in `R_VERSION`. Where that register 
 --prerelease
 ```
 
-Also runs the tests against the next specification revision, which is not yet ratified, regardless of the declared version. For a device that has not declared the next version, failures among them show what that version would require rather than defects against its own declared version. A failure here is worth checking carefully against the specification before it is treated as a device defect.
+Also runs the tests against the next specification revision, which is not yet ratified, regardless of the declared version. For a device that has not declared the next version, failures among them show what that version would require rather than defects against its own declared version. A failure here is worth checking against the specification before it is treated as a device defect.
 
 ## Sharing a report
 
@@ -61,7 +61,7 @@ dotnet harp.toolkit verify --port COM3 --report report.html
 The report is titled with the device name and opens with a header that describes the run.
 
 - **WhoAmI** is the device identity class, read from `R_WHO_AM_I`.
-- **Serial port** is the port used to reach the device.
+- **Serial port** is the port used to communicate with the device.
 - **Hardware version** and **Firmware version** are read from the device at startup, and read as not reported for a device that does not answer them.
 - **Protocol version declared** is what the device reports in `R_VERSION`, or that no version was declared.
 - **Checked against** is the version of the specification used to verify the device, together with the reason when that is narrower than the version declared by the device.
@@ -78,7 +78,7 @@ Path to the HTML report written after the run. Without it the results are printe
 
 ### Acting on a reported failure
 
-The **Specification** link is what makes a disagreement decidable, so it is worth checking carefully before filing anything. Specification text moves between releases, and a test is written against one state of it.
+The **Specification** link is what makes a disagreement decidable, so it is worth checking before filing anything. Specification text moves between releases, and a test is written against one state of it.
 
 If the device matches the text at that commit and a test still fails, the test is wrong, and that belongs in the toolkit repository. If a test matches the text and the text itself is wrong, that belongs in the protocol repository.
 
