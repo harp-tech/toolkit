@@ -39,13 +39,16 @@ public static class Coprocessor
     /// <param name="portName">The name of the serial port used to communicate with the SoundCard.</param>
     /// <param name="firmware">The coprocessor firmware image to program.</param>
     /// <param name="forceUpdate">
-    /// <b>true</b> to program the image without checking that it supports the device;
-    /// <b>false</b> to throw an exception if the device does not answer or the image does not
+    /// <see langword="true"/> to program the image without checking that it supports the device;
+    /// <see langword="false"/> to throw an exception if the device does not answer or the image does not
     /// support it.
     /// </param>
     /// <param name="timeout">The time to wait, in milliseconds, for the device to answer a Harp command.</param>
     /// <param name="progress">The optional object that receives update progress reports.</param>
-    /// <param name="cancellationToken">The token that cancels the update.</param>
+    /// <param name="cancellationToken">
+    /// The token to monitor for cancellation requests. The default value is
+    /// <see cref="CancellationToken.None"/>.
+    /// </param>
     /// <returns>The task object representing the asynchronous firmware update operation.</returns>
     /// <remarks>
     /// The update accepts cancellation only before it switches the port to the coprocessor, and
@@ -73,22 +76,20 @@ public static class Coprocessor
             progress?.Report(new(UpdateStage.Check, 10));
             if (!forceUpdate)
             {
-                var whoAmI = await device.ReadWhoAmIAsync(cancellationToken).WithTimeout(timeout);
-                if (whoAmI != WhoAmI)
+                var identity = await DeviceIdentity.ReadAsync(device, timeout, cancellationToken);
+                if (identity.WhoAmI != WhoAmI)
                 {
                     throw new HarpException(
                         $"The coprocessor firmware is for the {DeviceName} with WhoAmI {WhoAmI}, but the " +
-                        $"device on this port has WhoAmI {whoAmI}.");
+                        $"device on this port has WhoAmI {identity.WhoAmI}.");
                 }
 
-                var hardwareVersion = await device.ReadHardwareVersionAsync(cancellationToken).WithTimeout(timeout);
-                var deviceName = await device.ReadDeviceNameAsync(cancellationToken).WithTimeout(timeout);
-                if (!firmware.Metadata.Supports(deviceName, hardwareVersion))
+                if (!firmware.Metadata.Supports(identity.DeviceName, identity.HardwareVersion))
                 {
                     throw new HarpException(
                         $"The firmware file is for {firmware.Metadata.DeviceName} with hardware version " +
-                        $"{firmware.Metadata.HardwareVersion}, but the device on this port is {deviceName} " +
-                        $"with hardware version {hardwareVersion}.");
+                        $"{firmware.Metadata.HardwareVersion}, but the device on this port is {identity.DeviceName} " +
+                        $"with hardware version {identity.HardwareVersion}.");
                 }
             }
 

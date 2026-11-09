@@ -25,16 +25,13 @@ class ToolkitCommand : RootCommand
             return portNameOption.ReportErrorsAsync(portName, async () =>
             {
                 using var device = new AsyncDevice(portName);
-                var whoAmI = await device.ReadWhoAmIAsync().WithTimeout(portTimeout);
-                var hardwareVersion = await device.ReadHardwareVersionAsync().WithTimeout(portTimeout);
-                var firmwareVersion = await device.ReadFirmwareVersionAsync().WithTimeout(portTimeout);
+                var identity = await DeviceIdentity.ReadAsync(device, portTimeout);
                 var timestamp = await device.ReadTimestampSecondsAsync().WithTimeout(portTimeout);
-                var deviceName = await device.ReadDeviceNameAsync().WithTimeout(portTimeout);
                 Console.WriteLine($"Harp device found in {portName}");
-                Console.WriteLine($"DeviceName: {deviceName}");
-                Console.WriteLine($"WhoAmI: {whoAmI}");
-                Console.WriteLine($"Hw: {hardwareVersion.Major}.{hardwareVersion.Minor}");
-                Console.WriteLine($"Fw: {firmwareVersion.Major}.{firmwareVersion.Minor}");
+                Console.WriteLine($"DeviceName: {identity.DeviceName}");
+                Console.WriteLine($"WhoAmI: {identity.WhoAmI}");
+                Console.WriteLine($"Hw: {identity.HardwareVersion.Major}.{identity.HardwareVersion.Minor}");
+                Console.WriteLine($"Fw: {identity.FirmwareVersion.Major}.{identity.FirmwareVersion.Minor}");
                 Console.WriteLine($"Timestamp (s): {timestamp}");
                 Console.WriteLine();
             });

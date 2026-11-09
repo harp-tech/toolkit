@@ -79,8 +79,8 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     /// <param name="hardwareVersion">The hardware version to check for compatibility.</param>
     /// <param name="assemblyVersion">The optional board assembly version to check for compatibility.</param>
     /// <returns>
-    /// <b>true</b> if the firmware supports the specified <paramref name="hardwareVersion"/> and
-    /// <paramref name="assemblyVersion"/>; otherwise, <b>false</b>.
+    /// <see langword="true"/> if the firmware supports the specified <paramref name="hardwareVersion"/>
+    /// and <paramref name="assemblyVersion"/>; otherwise, <see langword="false"/>.
     /// </returns>
     public bool Supports(string deviceName, HarpVersion hardwareVersion, int assemblyVersion = default)
     {
@@ -94,8 +94,8 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     /// </summary>
     /// <param name="obj">The object to compare with the current metadata.</param>
     /// <returns>
-    /// <b>true</b> if the specified object is equal to the current metadata;
-    /// otherwise, <b>false</b>.
+    /// <see langword="true"/> if the specified object is equal to the current metadata;
+    /// otherwise, <see langword="false"/>.
     /// </returns>
     public override bool Equals(object? obj)
     {
@@ -108,8 +108,8 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     /// </summary>
     /// <param name="other">The metadata object to compare with the current metadata.</param>
     /// <returns>
-    /// <b>true</b> if the specified metadata object is equal to the current metadata;
-    /// otherwise, <b>false</b>.
+    /// <see langword="true"/> if the specified metadata object is equal to the current metadata;
+    /// otherwise, <see langword="false"/>.
     /// </returns>
     public bool Equals(FirmwareMetadata? other)
     {
@@ -146,8 +146,8 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     /// <param name="lhs">The value on the left-hand side of the operator.</param>
     /// <param name="rhs">The value on the right-hand side of the operator.</param>
     /// <returns>
-    /// <b>true</b> if the value on the left-hand side of the operator is equal
-    /// to the value on the right-hand side; otherwise, <b>false</b>.
+    /// <see langword="true"/> if the value on the left-hand side of the operator is equal
+    /// to the value on the right-hand side; otherwise, <see langword="false"/>.
     /// </returns>
     public static bool operator ==(FirmwareMetadata? lhs, FirmwareMetadata? rhs)
     {
@@ -162,8 +162,8 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     /// <param name="lhs">The value on the left-hand side of the operator.</param>
     /// <param name="rhs">The value on the right-hand side of the operator.</param>
     /// <returns>
-    /// <b>true</b> if the value on the left-hand side of the operator is not equal
-    /// to the value on the right-hand side; otherwise, <b>false</b>.
+    /// <see langword="true"/> if the value on the left-hand side of the operator is not equal
+    /// to the value on the right-hand side; otherwise, <see langword="false"/>.
     /// </returns>
     public static bool operator !=(FirmwareMetadata? lhs, FirmwareMetadata? rhs)
     {
@@ -196,9 +196,11 @@ public sealed class FirmwareMetadata : IEquatable<FirmwareMetadata>
     /// <param name="metadata">
     /// When this method returns, contains the equivalent <see cref="FirmwareMetadata"/> object
     /// for the specified string representation if the conversion was successful;
-    /// otherwise, contains <b>null</b>.
+    /// otherwise, contains <see langword="null"/>.
     /// </param>
-    /// <returns><b>true</b> if the conversion was successful; otherwise, <b>false</b>.</returns>
+    /// <returns>
+    /// <see langword="true"/> if the conversion was successful; otherwise, <see langword="false"/>.
+    /// </returns>
     public static bool TryParse(string input, [NotNullWhen(true)] out FirmwareMetadata? metadata)
     {
         if (input == null) throw new ArgumentNullException(nameof(input));

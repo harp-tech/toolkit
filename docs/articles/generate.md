@@ -1,4 +1,4 @@
-# Code Generation
+# Code generation
 
 `harp.toolkit` generates firmware code, interface code and reference documentation from device metadata.
 

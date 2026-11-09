@@ -2,7 +2,7 @@
 
 Tool for inspecting, updating and interfacing with Harp devices, with automatic [code generation](https://harp-tech.org/toolkit/articles/generate.html) for firmware, interfaces and reference documentation.
 
-## Getting Started
+## Getting started
 
 1. Navigate to the [Harp.Toolkit NuGet tool package](https://www.nuget.org/packages/Harp.Toolkit/)
 2. Click `.NET CLI (Local)` and copy the two suggested commands. E.g.:
@@ -40,7 +40,7 @@ Tool for inspecting, updating and interfacing with Harp devices, with automatic 
     dotnet tool restore
     ```
 
-## Firmware Update
+## Firmware update
 
 `harp.toolkit` can write a firmware image to a connected device, checking that the image is compatible before writing anything:
 
@@ -50,9 +50,9 @@ dotnet harp.toolkit update --port COM4 Behavior-fw3.3-harp1.15-hw2.0-ass0.hex
 
 An update resets the device, so avoid updating firmware that is part of a running experiment, since interrupting an update leaves the device in bootloader mode until one completes successfully.
 
-See [Firmware Update](https://harp-tech.org/toolkit/articles/update.html) for the naming convention used by firmware images, how to recover a device left in bootloader mode, and the available options.
+See [Firmware update](https://harp-tech.org/toolkit/articles/update.html) for the naming convention used by firmware images, how to recover a device left in bootloader mode, and the available options.
 
-## Code Generation
+## Code generation
 
 `harp.toolkit` can also generate device interface and firmware code from a `device.yml` metadata file. With a `device.yml` in the current directory, the following generates the .NET device interface for [Bonsai.Harp](https://harp-tech.org/api/Bonsai.Harp.html):
 
@@ -66,9 +66,9 @@ To generate the [Harp Python](https://harp-tech.org/python) interface instead:
 dotnet harp.toolkit generate interface python
 ```
 
-See [Code Generation](https://harp-tech.org/toolkit/articles/generate.html) for authoring device metadata, generating firmware and reference documentation, and the available options.
+See [Code generation](https://harp-tech.org/toolkit/articles/generate.html) for authoring device metadata, generating firmware and reference documentation, and the available options.
 
-## Device Verification
+## Device verification
 
 `harp.toolkit` can also check a device against the Harp specification, reporting where its behavior departs from the standard and writing the result as a shareable HTML report:
 
@@ -78,7 +78,7 @@ dotnet harp.toolkit verify --port COM4 --report report.html
 
 Verification writes to device registers and assumes a freshly powered device, so avoid running it against a device that is part of a running experiment.
 
-See [Device Verification](https://harp-tech.org/toolkit/articles/verify.html) for the specification used to check the device, the report structure, and the available options.
+See [Device verification](https://harp-tech.org/toolkit/articles/verify.html) for the specification used to check the device, the report structure, and the available options.
 
 ## Contributing
 

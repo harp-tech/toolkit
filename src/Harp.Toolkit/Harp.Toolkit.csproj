@@ -12,6 +12,7 @@
   <ItemGroup>
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.8.0" />
     <PackageReference Include="Harp.Generators" Version="0.9.1" />
+    <PackageReference Include="libusb.runtime" Version="1.0.27" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="6.0.0" />
     <PackageReference Include="System.CommandLine" Version="2.0.1" />
@@ -25,6 +26,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="$(Pkglibusb_runtime)\NOTICE.txt" Link="licenses\libusb\NOTICE.txt" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+    <None Include="$(Pkglibusb_runtime)\LICENSE" Link="licenses\libusb\LICENSE" CopyToOutputDirectory="PreserveNewest" Visible="false" />
     <None Update="Verify\ReportTemplate.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

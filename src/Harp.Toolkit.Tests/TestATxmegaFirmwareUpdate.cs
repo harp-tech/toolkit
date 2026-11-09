@@ -17,7 +17,7 @@ namespace Harp.Toolkit.Tests;
 /// </remarks>
 [TestClass]
 [DoNotParallelize]
-public class TestFirmwareUpdate
+public class TestATxmegaFirmwareUpdate
 {
     /// <summary>
     /// The time allowed for the device to start responding again after a successful update, before
@@ -52,6 +52,11 @@ public class TestFirmwareUpdate
     {
         var portName = HardwareTestHelper.RequirePort();
         var firmwarePath = HardwareTestHelper.RequireFirmware();
+        if (!string.Equals(Path.GetExtension(firmwarePath), ".hex", StringComparison.OrdinalIgnoreCase))
+        {
+            Assert.Inconclusive($"The firmware image '{firmwarePath}' is not an Intel HEX image for the ATxmega core.");
+        }
+
         var iterations = HardwareTestHelper.GetTestIterations(5);
         HardwareTestHelper.RequireResetConsent();
 

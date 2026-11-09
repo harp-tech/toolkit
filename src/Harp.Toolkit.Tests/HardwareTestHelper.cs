@@ -88,6 +88,21 @@ static class HardwareTestHelper
     }
 
     /// <summary>
+    /// Skips the calling test when the libusb library needed by Pico updates cannot be loaded.
+    /// </summary>
+    public static void RequireLibUsb()
+    {
+        try
+        {
+            Usb.UsbContext.Create().Dispose();
+        }
+        catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
+        {
+            Assert.Inconclusive("The libusb library could not be loaded, so Pico updates cannot run.");
+        }
+    }
+
+    /// <summary>
     /// Returns the configured number of iterations, or <paramref name="defaultValue"/>
     /// when none has been configured, so a longer run can be requested without a rebuild.
     /// </summary>

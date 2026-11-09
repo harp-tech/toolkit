@@ -1,4 +1,4 @@
-# Device Verification
+# Device verification
 
 `harp.toolkit` can check a device against the Harp specification and report where its behavior departs from what the standard requires. The tests span all three specification documents, covering the core register set and its access rules, the reply behavior required by the binary protocol, and alignment on the synchronization clock. Results print to the console as the run proceeds, and can be written to a shareable HTML report.
 
